@@ -9,6 +9,7 @@
 
   /* Sizes shared by the cards and chips: they shrink on small screens. */
   --cw: clamp(3.4rem, 13.5vw, 5.4rem);
+  --ch: calc(var(--cw) * 1.455); /* card height: the artwork is 167 x 243 */
   --chip: clamp(2.1rem, 8vw, 2.9rem);
   --icon-button: clamp(2.2rem, 9.5vw, 2.5rem);
 

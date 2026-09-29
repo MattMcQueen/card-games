@@ -52,6 +52,8 @@
   <p>H to hit, S to stand, D to double and P to split.</p>
   <h3>Supporting the site</h3>
   <p>The site is free and has no ads. If you enjoy it, you can buy me a coffee with the "Support me" button. Thank you!</p>
+  <h3>Credits</h3>
+  <p>The card artwork is by Byron Knoll, who released it into the public domain (<a href="https://commons.wikimedia.org/wiki/Category:Playing_cards_set_by_Byron_Knoll" rel="noopener" target="_blank">Wikimedia Commons</a>). Thank you!</p>
   <h3>Made by</h3>
   <p>Matt McQueen. The code is open source under the MIT licence on <a href="https://github.com/MattMcQueen/blackjack" rel="noopener" target="_blank">GitHub</a>.</p>
 </Dialog>
