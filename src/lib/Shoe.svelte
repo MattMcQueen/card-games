@@ -13,7 +13,7 @@
   .shoe {
     position: relative;
     width: calc(var(--cw) * 0.9);
-    height: calc(var(--cw) * 1.26 + 12px);
+    height: calc(var(--ch) * 0.9 + 12px);
     filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.5));
   }
   .back {
@@ -21,6 +21,6 @@
     top: calc(var(--layer) * 3px);
     left: calc(var(--layer) * -1px);
     width: calc(var(--cw) * 0.9);
-    height: calc(var(--cw) * 1.26);
+    height: calc(var(--ch) * 0.9);
   }
 </style>

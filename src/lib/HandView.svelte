@@ -99,7 +99,7 @@
   }
   .cards {
     display: flex;
-    min-height: calc(var(--cw) * 1.4);
+    min-height: var(--ch);
   }
   .cards > :global(*:not(:first-child)) {
     margin-left: calc(var(--cw) * var(--overlap));

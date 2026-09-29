@@ -19,6 +19,7 @@
   import InfoDialogs from './lib/InfoDialogs.svelte';
   import KofiButton from './lib/KofiButton.svelte';
   import KofiDialog from './lib/KofiDialog.svelte';
+  import { preloadCards } from './lib/cardImages';
   import { cuesFor } from './lib/cues';
   import { outcomeLabel, signed } from './lib/labels';
   import { reducedMotion, settleDelay } from './lib/motion';
@@ -78,12 +79,14 @@
   // Browsers only start audio from a tap or key press, and all of these run from one.
   function update(next: typeof game) {
     unlockAudio();
+    preloadCards();
     playCues(cuesFor(game, next));
     game = next;
   }
 
   function addChip(value: number) {
     unlockAudio();
+    preloadCards();
     playCues([{ sound: 'chip', at: 0 }]);
     wanted = Math.min(bet + value, limit);
   }
@@ -115,7 +118,7 @@
   }
 </script>
 
-<svelte:window {onkeydown} />
+<svelte:window {onkeydown} onpointerdown={preloadCards} />
 <Sprites />
 
 <main>
@@ -307,7 +310,7 @@
     align-items: flex-start;
   }
   .dealer-zone {
-    min-height: calc(var(--cw) * 1.4 + 4rem);
+    min-height: calc(var(--ch) + 4rem);
   }
   .player-zone {
     align-self: end;

@@ -15,6 +15,8 @@ delete previewHeaders['Strict-Transport-Security'];
 
 export default defineConfig({
   plugins: [svelte()],
+  // Keep the card images as real, separately cached files rather than data inside the script.
+  build: { assetsInlineLimit: 0 },
   preview: { headers: previewHeaders },
   test: {
     include: ['src/**/*.test.ts'],
