@@ -25,6 +25,7 @@
   import Shoe from './lib/Shoe.svelte';
   import { playCues, unlockAudio } from './lib/sound.svelte';
   import SoundToggle from './lib/SoundToggle.svelte';
+  import SupportButton from './lib/SupportButton.svelte';
   import Sprites from './lib/Sprites.svelte';
   import TableMarkings from './lib/TableMarkings.svelte';
   import ThemeToggle from './lib/ThemeToggle.svelte';
@@ -210,11 +211,10 @@
     {:else if over}
       <p class="over">Game over: you are out of chips.</p>
       <button type="button" class="deal" onclick={restart}>Play again with {STARTING_CHIPS} chips</button>
-      <p class="over-support">
-        Enjoyed it? <button type="button" class="link" onclick={() => kofi.show()}>Buy me a coffee on Ko-fi</button>
-      </p>
+      <SupportButton onclick={() => kofi.show()} />
     {:else}
       <button type="button" class="deal" onclick={again}>Next hand</button>
+      <SupportButton onclick={() => kofi.show()} />
     {/if}
   </div>
 
@@ -537,16 +537,6 @@
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
-  }
-  .over-support {
-    flex-basis: 100%;
-    margin: 0;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-  .over-support .link {
-    min-height: 0;
   }
   .sr-only {
     position: absolute;
