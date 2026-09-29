@@ -14,7 +14,7 @@ there is no login, and no advertising. The site is funded by a Ko-fi "Support me
 - Blackjack (Ace + 10-value card) pays 3:2; a win pays 1:1; a tie is a push and the bet is returned.
 - Dealer hits to 17 and stands on all 17s, including soft 17.
 - Player options: hit, stand, double down, split, surrender.
-  - Double down: double the bet and take exactly one card; allowed on any two-card hand (including after a split) if you have the chips.
+  - Double down: double the bet and take exactly one card, then the hand stands; allowed on any two-card hand (including after a split) if you have the chips. The 20-chip maximum applies to the bet placed, so a doubled bet can go above it.
   - Split: two cards of the same rank (K+Q is not a pair), needs chips for the extra bet, up to 4 hands in total.
   - Split aces get one card each, cannot be re-split and cannot double.
   - A two-card 21 after a split counts as blackjack (3:2).

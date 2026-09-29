@@ -36,7 +36,7 @@
       <ul class="points">
         <li><strong>Hit <kbd>H</kbd>:</strong> take another card.</li>
         <li><strong>Stand <kbd>S</kbd>:</strong> keep your hand.</li>
-        <li><strong>Double <kbd>D</kbd>:</strong> double your bet and take exactly one more card. You need enough chips to cover it.</li>
+        <li><strong>Double <kbd>D</kbd>:</strong> on your first two cards, double your bet and take exactly one more card. Your hand then stands, whatever the total. You need enough chips to cover the extra bet, and a doubled bet can go above the {MAX_BET}-chip limit, which only applies to the bet you place.</li>
         <li><strong>Surrender <kbd>R</kbd>:</strong> on your first two cards, give up the hand and get half your bet back (rounded down). You can't surrender after a split or after taking another action, and a bet of 1 chip is too small to surrender.</li>
         <li><strong>Split <kbd>P</kbd>:</strong> with two cards of the same rank (a K and a Q don't count), split them into two hands with a second equal bet. You can split up to {MAX_HANDS} hands, and double down on any split hand. Split aces get one card each, and can't be split again or doubled. A two-card 21 after a split still counts as blackjack.</li>
       </ul>
