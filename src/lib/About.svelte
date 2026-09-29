@@ -26,7 +26,7 @@
     </li>
     <li>
       <h2>Keyboard</h2>
-      <p><kbd>H</kbd> to hit, <kbd>S</kbd> to stand, <kbd>D</kbd> to double and <kbd>P</kbd> to split.</p>
+      <p><kbd>H</kbd> to hit, <kbd>S</kbd> to stand, <kbd>D</kbd> to double, <kbd>P</kbd> to split and <kbd>R</kbd> to surrender. When insurance is offered, <kbd>I</kbd> takes it and <kbd>N</kbd> declines.</p>
     </li>
     <li>
       <h2>Supporting the site</h2>

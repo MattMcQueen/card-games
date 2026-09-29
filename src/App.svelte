@@ -4,6 +4,7 @@
     MIN_BET,
     STARTING_CHIPS,
     act,
+    insuranceCost,
     isGameOver,
     legalActions,
     maxBet,
@@ -55,28 +56,31 @@
 
   // Chips held, not counting winnings still to be revealed.
   const shownChips = $derived(
-    settling ? game.chips - game.results.reduce((sum, r) => sum + r.returned, 0) : game.chips,
+    settling
+      ? game.chips - game.results.reduce((sum, r) => sum + r.returned, 0) - game.insuranceReturned
+      : game.chips,
   );
 
-  const netTotal = $derived(game.results.reduce((sum, r) => sum + r.net, 0));
+  // The insurance bet is a separate wager: what it won (2 to 1) or lost.
+  const insuranceNet = $derived(game.insuranceReturned - game.insurance);
+  const netTotal = $derived(game.results.reduce((sum, r) => sum + r.net, 0) + insuranceNet);
   // One result for the whole round. With several hands each one is also labelled on the table;
   // with one hand this banner is the only place the result is shown.
   const banner = $derived.by(() => {
     if (!showResults) return null;
     const outcomes = game.results.map((r) => r.outcome);
-    const lead = outcomes.includes('blackjack')
-      ? 'Blackjack! '
-      : outcomes.length === 1 && outcomes[0] === 'bust'
-        ? 'Bust! '
-        : '';
+    const only = outcomes.length === 1 ? outcomes[0] : undefined;
+    if (only === 'surrender') return { kind: 'lose', text: `Surrendered, lose ${-netTotal}` };
+    const lead = outcomes.includes('blackjack') ? 'Blackjack! ' : only === 'bust' ? 'Bust! ' : '';
     if (netTotal > 0) return { kind: 'win', text: `${lead}You win ${netTotal}` };
     if (netTotal < 0) return { kind: 'lose', text: `${lead}Dealer wins ${-netTotal}` };
-    return { kind: 'push', text: 'Push' };
+    return { kind: 'push', text: game.insuranceReturned > 0 ? 'Even: insurance paid' : 'Push' };
   });
 
   const announcement = $derived.by(() => {
     if (!showResults) return '';
     const parts = game.results.map((r) => `${outcomeLabel[r.outcome]} ${signed(r.net)}`);
+    if (game.insurance > 0) parts.push(`Insurance ${signed(insuranceNet)}`);
     return `Round over. ${parts.join(', ')}. You have ${game.chips} chips.${over ? ' You are out of chips.' : ''}`;
   });
 
@@ -111,7 +115,15 @@
     wanted = 10;
   }
 
-  const keys: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split' };
+  const keys: Record<string, Action> = {
+    h: 'hit',
+    s: 'stand',
+    d: 'double',
+    p: 'split',
+    r: 'surrender',
+    i: 'insure',
+    n: 'decline',
+  };
   function onkeydown(event: KeyboardEvent) {
     if (nav.route !== 'game') return;
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
@@ -156,6 +168,15 @@
             <p class="banner {banner.kind}" role="presentation">{banner.text}</p>
           {:else if game.shuffled && inRound}
             <p class="shuffle-note">Shuffling a fresh shoe…</p>
+          {/if}
+          {#if game.insurance > 0}
+            <p class="side-bet">
+              {#if showResults}
+                Insurance {game.insuranceReturned > 0 ? `pays +${insuranceNet}` : `lost −${game.insurance}`}
+              {:else}
+                Insurance {game.insurance}
+              {/if}
+            </p>
           {/if}
         </div>
 
@@ -206,12 +227,21 @@
           <button type="button" class="btn quiet" onclick={() => (wanted = 0)} disabled={bet === 0}>Clear</button>
         </div>
         <button type="button" class="btn primary" onclick={deal} disabled={bet < MIN_BET}>Deal</button>
+      {:else if game.phase === 'insurance'}
+        <p class="hint">
+          The dealer shows an ace. Insurance costs {insuranceCost(game.hands[0]?.bet ?? 0)} and pays 2 to 1 if the dealer's next card gives them blackjack.
+        </p>
+        <div class="actions">
+          <button type="button" class="btn primary" onclick={() => play('insure')} title="Take insurance (I)" aria-keyshortcuts="I">Insurance ({insuranceCost(game.hands[0]?.bet ?? 0)})</button>
+          <button type="button" class="btn" onclick={() => play('decline')} title="No insurance (N)" aria-keyshortcuts="N">No thanks</button>
+        </div>
       {:else if game.phase === 'player'}
         <div class="actions">
           <button type="button" class="btn" onclick={() => play('hit')} disabled={!actions.includes('hit')} title="Hit (H)" aria-keyshortcuts="H">Hit</button>
           <button type="button" class="btn" onclick={() => play('stand')} disabled={!actions.includes('stand')} title="Stand (S)" aria-keyshortcuts="S">Stand</button>
           <button type="button" class="btn" onclick={() => play('double')} disabled={!actions.includes('double')} title="Double down (D)" aria-keyshortcuts="D">Double</button>
           <button type="button" class="btn" onclick={() => play('split')} disabled={!actions.includes('split')} title="Split (P)" aria-keyshortcuts="P">Split</button>
+          <button type="button" class="btn" onclick={() => play('surrender')} disabled={!actions.includes('surrender')} title="Surrender for half your bet back (R)" aria-keyshortcuts="R">Surrender</button>
         </div>
       {:else if !showResults}
         <div class="actions-spacer" aria-hidden="true"></div>
@@ -300,6 +330,17 @@
     width: 1.9rem;
     height: 1.9rem;
   }
+  /* On a phone the dealer's label (which can read "SOFT 11") reaches toward the corner, so the
+     chip count sheds its icon to stay out of the way. */
+  @media (max-width: 480px) {
+    .balance {
+      padding: 0.2rem 0.7rem;
+      font-size: 1rem;
+    }
+    .balance-chip {
+      display: none;
+    }
+  }
   .shoe-corner {
     position: absolute;
     top: 0.8rem;
@@ -357,6 +398,8 @@
   .verdict {
     display: grid;
     place-items: center;
+    align-content: center;
+    gap: 0.25rem;
     min-height: 2.75rem;
   }
   .banner {
@@ -381,6 +424,16 @@
   .banner.push {
     background: var(--push-bg);
     color: var(--push-fg);
+  }
+  .side-bet {
+    margin: 0;
+    padding: 0.1rem 0.8rem;
+    border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.3);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold);
   }
   .shuffle-note {
     margin: 0;

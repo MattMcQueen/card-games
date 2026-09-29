@@ -28,6 +28,11 @@ export function cuesFor(prev: GameState, next: GameState, reduced = reducedMotio
     add('deal', when(230, 1));
     add('deal', when(460, 2));
     for (let i = 1; i < next.dealer.length; i++) add('deal', when(dealerDelay(i), i + 2));
+  } else if (prev.phase === 'insurance') {
+    if (next.insurance > prev.insurance) add('chip'); // insurance taken
+    for (let i = prev.dealer.length; i < next.dealer.length; i++) {
+      add('deal', when(dealerDelay(i), i));
+    }
   } else if (prev.phase === 'player') {
     if (next.hands.length > prev.hands.length) {
       // Split: a second bet goes down and each new hand is dealt a card.
@@ -45,7 +50,7 @@ export function cuesFor(prev: GameState, next: GameState, reduced = reducedMotio
 
   if (next.phase === 'settled' && prev.phase !== 'settled') {
     const at = reduced ? 0.2 : settleDelay(next.dealer.length) / 1000;
-    const net = next.results.reduce((sum, r) => sum + r.net, 0);
+    const net = next.results.reduce((sum, r) => sum + r.net, 0) + next.insuranceReturned - next.insurance;
     if (net > 0) {
       add(next.results.some((r) => r.outcome === 'blackjack') ? 'blackjack' : 'win', at);
       add('payout', at + 0.25);

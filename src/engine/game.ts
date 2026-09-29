@@ -13,12 +13,24 @@ export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
     active: 0,
     dealer: [],
     results: [],
+    insurance: 0,
+    insuranceReturned: 0,
   };
+}
+
+/** What insurance costs for a bet: half of it, rounded down (so a bet of 1 cannot be insured). */
+export function insuranceCost(bet: number): number {
+  return Math.floor(bet / 2);
+}
+
+/** What a surrender gives back: half the bet, rounded down in the house's favour. */
+export function surrenderRefund(bet: number): number {
+  return Math.floor(bet / 2);
 }
 
 /** The game is over once the player has no chips left and no bet is in play. */
 export function isGameOver(state: GameState): boolean {
-  return state.phase !== 'player' && state.chips < MIN_BET;
+  return state.phase !== 'player' && state.phase !== 'insurance' && state.chips < MIN_BET;
 }
 
 /** The biggest bet the player may place right now. */
@@ -32,7 +44,10 @@ function draw(shoe: readonly Card[]): [Card, readonly Card[]] {
   return [card, shoe.slice(1)];
 }
 
-/** Places the bet and deals: player, dealer, player. The dealer's next cards come later. */
+/**
+ * Places the bet and deals: player, dealer, player. The dealer's next cards come later.
+ * If the dealer's card is an ace and the player can afford it, insurance is offered first.
+ */
 export function startRound(
   state: GameState,
   bet: number,
@@ -56,22 +71,30 @@ export function startRound(
     bet,
     doubled: false,
     fromSplit: false,
+    surrendered: false,
     done: isBlackjack(cards),
   };
 
-  return advance({
-    phase: 'player',
-    chips: state.chips - bet,
+  const chips = state.chips - bet;
+  const offerInsurance = up.rank === 'A' && insuranceCost(bet) >= 1 && chips >= insuranceCost(bet);
+  const started: GameState = {
+    phase: offerInsurance ? 'insurance' : 'player',
+    chips,
     shoe,
     shuffled,
     hands: [hand],
     active: 0,
     dealer: [up],
     results: [],
-  });
+    insurance: 0,
+    insuranceReturned: 0,
+  };
+  // Even a player blackjack waits for the insurance answer (taking it is "even money").
+  return offerInsurance ? started : advance(started);
 }
 
 export function legalActions(state: GameState): Action[] {
+  if (state.phase === 'insurance') return ['insure', 'decline'];
   if (state.phase !== 'player') return [];
   const hand = state.hands[state.active];
   if (!hand || hand.done) return [];
@@ -80,6 +103,10 @@ export function legalActions(state: GameState): Action[] {
   const canAfford = state.chips >= hand.bet;
   if (hand.cards.length === 2 && canAfford) actions.push('double');
   if (isPair(hand.cards) && canAfford && state.hands.length < MAX_HANDS) actions.push('split');
+  // Only as the very first decision on a hand, and only if half the bet is at least a chip.
+  if (hand.cards.length === 2 && !hand.fromSplit && surrenderRefund(hand.bet) >= 1) {
+    actions.push('surrender');
+  }
   return actions;
 }
 
@@ -91,6 +118,17 @@ export function act(state: GameState, action: Action): GameState {
   const hand = state.hands[index] as PlayerHand;
 
   switch (action) {
+    case 'insure': {
+      const stake = insuranceCost(hand.bet);
+      return advance({ ...state, phase: 'player', chips: state.chips - stake, insurance: stake });
+    }
+    case 'decline':
+      return advance({ ...state, phase: 'player' });
+    case 'surrender':
+      return advance({
+        ...state,
+        hands: replaceHand(state, index, { ...hand, surrendered: true, done: true }),
+      });
     case 'hit': {
       const [card, shoe] = draw(state.shoe);
       const cards = [...hand.cards, card];
@@ -130,6 +168,7 @@ export function act(state: GameState, action: Action): GameState {
           bet: hand.bet,
           doubled: false,
           fromSplit: true,
+          surrendered: false,
           // Split aces get one card only; other hands stop at 21.
           done: splitAces || handValue(cards).total === 21,
         };
@@ -152,13 +191,20 @@ function replaceHand(state: GameState, index: number, hand: PlayerHand): PlayerH
   return state.hands.map((existing, i) => (i === index ? hand : existing));
 }
 
-/** The dealer plays out (hits to 17, stands on every 17) and every hand is settled. */
+/** The dealer plays out (hits to 17, stands on every 17); every hand and the insurance bet are settled. */
 function finishRound(state: GameState): GameState {
   let shoe = state.shoe;
   const dealer = [...state.dealer];
 
-  // If every hand busted the dealer has nothing to beat and does not draw.
-  if (state.hands.some((hand) => !isBust(hand.cards))) {
+  // The insurance bet is settled by the dealer's second card, so an insured dealer always draws it.
+  if (state.insurance > 0 && dealer.length === 1) {
+    let card: Card;
+    [card, shoe] = draw(shoe);
+    dealer.push(card);
+  }
+
+  // If every hand busted or surrendered the dealer has nothing to beat and does not play on.
+  if (state.hands.some((hand) => !hand.surrendered && !isBust(hand.cards))) {
     while (handValue(dealer).total < 17) {
       let card: Card;
       [card, shoe] = draw(shoe);
@@ -167,7 +213,9 @@ function finishRound(state: GameState): GameState {
   }
 
   const results = state.hands.map((hand) => settleHand(hand, dealer));
-  const returned = results.reduce((sum, result) => sum + result.returned, 0);
+  // Insurance pays 2 to 1 when the dealer has blackjack, so the stake comes back three times over.
+  const insuranceReturned = state.insurance > 0 && isBlackjack(dealer) ? state.insurance * 3 : 0;
+  const returned = results.reduce((sum, result) => sum + result.returned, 0) + insuranceReturned;
   return {
     ...state,
     phase: 'settled',
@@ -175,6 +223,7 @@ function finishRound(state: GameState): GameState {
     shoe,
     dealer,
     results,
+    insuranceReturned,
   };
 }
 
@@ -186,6 +235,7 @@ function settleHand(hand: PlayerHand, dealer: readonly Card[]): HandResult {
     net: returned - hand.bet,
   });
 
+  if (hand.surrendered) return result('surrender', surrenderRefund(hand.bet));
   if (isBust(hand.cards)) return result('bust', 0);
 
   const dealerBlackjack = isBlackjack(dealer);
@@ -207,5 +257,14 @@ function settleHand(hand: PlayerHand, dealer: readonly Card[]): HandResult {
 /** Back to the betting screen after a round has been settled. */
 export function nextRound(state: GameState): GameState {
   if (state.phase !== 'settled') throw new Error('The round is not finished');
-  return { ...state, phase: 'betting', hands: [], active: 0, dealer: [], results: [] };
+  return {
+    ...state,
+    phase: 'betting',
+    hands: [],
+    active: 0,
+    dealer: [],
+    results: [],
+    insurance: 0,
+    insuranceReturned: 0,
+  };
 }

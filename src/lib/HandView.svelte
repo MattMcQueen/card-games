@@ -29,7 +29,9 @@
 
   const value = $derived(handValue(cards));
   const overlap = $derived(cards.length >= 4 ? -0.5 : cards.length === 3 ? -0.3 : 0.08);
-  const lost = $derived(result?.outcome === 'lose' || result?.outcome === 'bust');
+  const lost = $derived(
+    result?.outcome === 'lose' || result?.outcome === 'bust' || result?.outcome === 'surrender',
+  );
   const won = $derived(result?.outcome === 'win' || result?.outcome === 'blackjack');
 
   function delayFor(index: number): number {
@@ -140,6 +142,7 @@
     color: var(--win-fg);
   }
   .lose,
+  .surrender,
   .bust {
     background: var(--lose-bg);
     color: var(--lose-fg);

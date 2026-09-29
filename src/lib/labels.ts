@@ -6,6 +6,7 @@ export const outcomeLabel: Record<Outcome, string> = {
   push: 'Push',
   lose: 'Lose',
   bust: 'Bust',
+  surrender: 'Surrender',
 };
 
 /** +15, -10 or 0, using a proper minus sign. */

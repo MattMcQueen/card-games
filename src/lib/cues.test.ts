@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { act, newGame, nextRound, startRound } from '../engine';
 import { rigged } from '../engine/testing';
-import type { Rank } from '../engine';
+import type { Action, Rank } from '../engine';
 import { cuesFor } from './cues';
 
 const sounds = (cues: { sound: string }[]) => cues.map((c) => c.sound);
 
 /** Deal a rigged round, then play the given actions, returning every step. */
-function steps(ranks: Rank[], bet: number, ...actions: ('hit' | 'stand' | 'double' | 'split')[]) {
+function steps(ranks: Rank[], bet: number, ...actions: Action[]) {
   const start = rigged(ranks);
   let state = startRound(start, bet);
   const list = [{ prev: start, next: state }];
@@ -89,6 +89,32 @@ describe('cuesFor', () => {
     const dealt = startRound(start, 10);
     const settled = act(dealt, 'stand');
     expect(sounds(cuesFor(dealt, settled, false))).toContain('gameOver');
+  });
+
+  it('puts a chip down for insurance, and only when it is taken', () => {
+    const [, decline] = steps(['9', 'A', '8', 'K'], 10, 'decline');
+    expect(sounds(cuesFor(decline!.prev, decline!.next, false))).toEqual([]);
+    const [, insure] = steps(['9', 'A', '8', 'K'], 10, 'insure');
+    expect(sounds(cuesFor(insure!.prev, insure!.next, false))).toEqual(['chip']);
+  });
+
+  it('plays the dealer card and the result when insurance is answered on a blackjack', () => {
+    // player blackjack, dealer A + K: a push on the hand, insurance pays 2 to 1
+    const [, insure] = steps(['A', 'A', 'K', 'K'], 10, 'insure');
+    const played = sounds(cuesFor(insure!.prev, insure!.next, false));
+    expect(played).toEqual(['chip', 'deal', 'win', 'payout']);
+  });
+
+  it('counts an insurance win against a lost hand when choosing the result sound', () => {
+    const [, , stand] = steps(['9', 'A', '8', 'K'], 10, 'insure', 'stand');
+    // hand lost 10, insurance won 10: even, so a push sound
+    expect(sounds(cuesFor(stand!.prev, stand!.next, false))).toContain('push');
+  });
+
+  it('plays a losing sound for a surrender', () => {
+    const [, , surrender] = steps(['10', 'A', '6', '5'], 10, 'decline', 'surrender');
+    const played = sounds(cuesFor(surrender!.prev, surrender!.next, false));
+    expect(played).toEqual(['lose', 'sweep']);
   });
 
   it('makes no sound when moving on to the next hand', () => {
