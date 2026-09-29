@@ -16,6 +16,9 @@
   import { DENOMINATIONS } from './lib/chips';
   import ChipStack from './lib/ChipStack.svelte';
   import HandView from './lib/HandView.svelte';
+  import InfoDialogs from './lib/InfoDialogs.svelte';
+  import KofiButton from './lib/KofiButton.svelte';
+  import KofiDialog from './lib/KofiDialog.svelte';
   import { cuesFor } from './lib/cues';
   import { outcomeLabel, signed } from './lib/labels';
   import { reducedMotion, settleDelay } from './lib/motion';
@@ -29,6 +32,8 @@
   // The shoe is large and never edited in place, so it needs no deep reactivity.
   let game = $state.raw(newGame());
   let wanted = $state(10);
+  let info: InfoDialogs;
+  let kofi: KofiDialog;
 
   // After the dealer plays, the results wait until the dealer's cards have landed.
   let revealed = $state(false);
@@ -101,6 +106,7 @@
   const keys: Record<string, Action> = { h: 'hit', s: 'stand', d: 'double', p: 'split' };
   function onkeydown(event: KeyboardEvent) {
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+    if (document.querySelector('dialog[open]')) return; // a panel is open: keys belong to it
     const action = keys[event.key.toLowerCase()];
     if (action && actions.includes(action)) {
       event.preventDefault();
@@ -120,6 +126,7 @@
         <span class="balance-chip"><Chip value={5} /></span>
         <strong>{shownChips}</strong>
       </p>
+      <KofiButton onclick={() => kofi.show()} />
       <SoundToggle />
       <ThemeToggle />
     </div>
@@ -203,6 +210,9 @@
     {:else if over}
       <p class="over">Game over: you are out of chips.</p>
       <button type="button" class="deal" onclick={restart}>Play again with {STARTING_CHIPS} chips</button>
+      <p class="over-support">
+        Enjoyed it? <button type="button" class="link" onclick={() => kofi.show()}>Buy me a coffee on Ko-fi</button>
+      </p>
     {:else}
       <button type="button" class="deal" onclick={again}>Next hand</button>
     {/if}
@@ -210,8 +220,16 @@
 
   <footer>
     <p>Just for fun: chips have no value and no real money is involved. Refreshing the page starts a new game.</p>
+    <nav aria-label="More">
+      <button type="button" class="link" onclick={() => info.showHelp()}>How to play</button>
+      <button type="button" class="link" onclick={() => info.showAbout()}>About and privacy</button>
+      <button type="button" class="link" onclick={() => kofi.show()}>Support me on Ko-fi</button>
+    </nav>
   </footer>
 </main>
+
+<InfoDialogs bind:this={info} />
+<KofiDialog bind:this={kofi} />
 
 <style>
   main {
@@ -229,24 +247,24 @@
   }
   h1 {
     margin: 0;
-    font: 700 1.7rem Georgia, 'Times New Roman', serif;
+    font: 700 clamp(1.2rem, 5.4vw, 1.7rem) Georgia, 'Times New Roman', serif;
     letter-spacing: 0.04em;
   }
   .header-right {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: clamp(0.3rem, 1.5vw, 0.6rem);
   }
   .balance {
     display: flex;
     align-items: center;
     gap: 0.45rem;
     margin: 0;
-    padding: 0.25rem 0.9rem 0.25rem 0.35rem;
+    padding: 0.2rem clamp(0.6rem, 3vw, 0.9rem) 0.2rem 0.3rem;
     border: 1px solid var(--line);
     border-radius: 2rem;
     background: var(--panel);
-    font-size: 1.15rem;
+    font-size: clamp(1rem, 4.5vw, 1.15rem);
     font-variant-numeric: tabular-nums;
   }
   .balance-chip {
@@ -501,6 +519,34 @@
     text-align: center;
     font-size: 0.85rem;
     color: var(--muted);
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 1.25rem;
+    margin-top: 0.5rem;
+  }
+  .link {
+    min-height: 2.5rem;
+    padding: 0 0.25rem;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font-size: 0.9rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .over-support {
+    flex-basis: 100%;
+    margin: 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .over-support .link {
+    min-height: 0;
   }
   .sr-only {
     position: absolute;
