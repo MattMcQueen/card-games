@@ -18,6 +18,12 @@ export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
   };
 }
 
+/** Chips won (or, if negative, lost) over a settled round, counting the insurance bet. */
+export function roundNet(state: GameState): number {
+  const hands = state.results.reduce((sum, result) => sum + result.net, 0);
+  return hands + state.insuranceReturned - state.insurance;
+}
+
 /** What insurance costs for a bet: half of it, rounded down (so a bet of 1 cannot be insured). */
 export function insuranceCost(bet: number): number {
   return Math.floor(bet / 2);

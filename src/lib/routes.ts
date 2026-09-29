@@ -6,6 +6,11 @@ export const routes: readonly { route: Route; path: string; label: string; title
   { route: 'about', path: '/about', label: 'About', title: 'About and privacy - Blackjack' },
 ];
 
+/** A plain left click, the kind a link handles itself; with a modifier key it means "open elsewhere". */
+export function isPlainClick(event: Pick<MouseEvent, 'button' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>): boolean {
+  return event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
+}
+
 /** The page for an address. Anything unknown (the server only sends real pages here) is the game. */
 export function routeFor(pathname: string): Route {
   const path = pathname.replace(/\/+$/, '') || '/';

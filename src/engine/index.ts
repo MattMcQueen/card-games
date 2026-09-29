@@ -8,9 +8,7 @@ export {
   maxBet,
   newGame,
   nextRound,
+  roundNet,
   startRound,
-  surrenderRefund,
 } from './game';
-export { handValue, isBlackjack, isBust, isPair } from './hand';
-export { secureRandomInt } from './shoe';
-export type { RandomInt } from './shoe';
+export { handValue } from './hand';

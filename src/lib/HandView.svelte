@@ -1,9 +1,9 @@
 <script lang="ts">
   import { handValue, type Card, type HandResult } from '../engine';
-  import ChipStack from './ChipStack.svelte';
   import { outcomeLabel, signed } from './labels';
   import { dealerDelay, reducedMotion } from './motion';
   import PlayingCard from './PlayingCard.svelte';
+  import Wager from './Wager.svelte';
 
   let {
     title,
@@ -28,11 +28,14 @@
   } = $props();
 
   const value = $derived(handValue(cards));
-  const overlap = $derived(cards.length >= 4 ? -0.5 : cards.length === 3 ? -0.3 : 0.08);
-  const lost = $derived(
-    result?.outcome === 'lose' || result?.outcome === 'bust' || result?.outcome === 'surrender',
-  );
-  const won = $derived(result?.outcome === 'win' || result?.outcome === 'blackjack');
+  const totalText = $derived(`${value.soft && value.total < 21 ? 'soft ' : ''}${value.total}`);
+  const overlap = $derived(cardOverlap(cards.length));
+
+  /** How far each card tucks under the one before it, as a fraction of a card's width (negative: overlapping). */
+  function cardOverlap(count: number): number {
+    if (count >= 4) return -0.5;
+    return count === 3 ? -0.3 : 0.08;
+  }
 
   function delayFor(index: number): number {
     if (reducedMotion) return 0;
@@ -45,7 +48,7 @@
   <h2>
     <span class="name">{title}</span>
     {#if cards.length > 0 && !hideTotal}
-      <span class="total">{value.soft && value.total < 21 ? 'soft ' : ''}{value.total}</span>
+      <span class="total">{totalText}</span>
     {/if}
   </h2>
 
@@ -56,13 +59,7 @@
   </div>
 
   {#if bet !== undefined}
-    <div class="wager">
-      <ChipStack amount={bet} fate={lost ? 'lost' : 'none'} />
-      {#if won && result && result.net > 0}
-        <ChipStack amount={result.net} />
-      {/if}
-      <span class="amount">{bet}</span>
-    </div>
+    <Wager {bet} {result} />
   {/if}
 
   {#if showPill}
@@ -110,18 +107,6 @@
   }
   .cards > :global(*:not(:first-child)) {
     margin-left: calc(var(--cw) * var(--overlap));
-  }
-  .wager {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.4rem;
-    min-height: calc(var(--chip) * 1.2);
-  }
-  .amount {
-    align-self: center;
-    color: color-mix(in srgb, var(--on-felt) 85%, transparent);
-    font-size: 0.85rem;
-    font-weight: 700;
   }
   .pill {
     margin: 0;

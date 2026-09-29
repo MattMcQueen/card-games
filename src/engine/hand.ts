@@ -1,6 +1,6 @@
 import type { Card, Rank } from './types';
 
-export function cardValue(rank: Rank): number {
+function cardValue(rank: Rank): number {
   if (rank === 'A') return 1;
   if (rank === 'J' || rank === 'Q' || rank === 'K') return 10;
   return Number(rank);

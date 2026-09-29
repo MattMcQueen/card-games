@@ -21,18 +21,20 @@
   --sans: "Figtree", "Figtree Fallback", system-ui, sans-serif;
   --serif: "Young Serif", "Young Serif Fallback", Georgia, serif;
 
-  --bg: #f5f7fa;
-  --surface: #ffffff;
-  --panel: #e3e9f1;
-  --fg: #1f2d3d;
-  --soft: #45546a;
-  --muted: #5a6778;
-  --line: #e4e9f0;
-  --line-strong: #d9e0ea;
-  --accent: #a84e2b;
-  --accent-fg: #ffffff;
-  --accent-soft: #f5e3d9;
-  --focus: #2563eb;
+  /* Each colour is light-dark(light, dark): the theme is whichever colour-scheme is in force
+     (see the end of this block), so there is one list of colours, not two. */
+  --bg: light-dark(#f5f7fa, #13171d);
+  --surface: light-dark(#ffffff, #1a2029);
+  --panel: light-dark(#e3e9f1, #1e2633);
+  --fg: light-dark(#1f2d3d, #ece6da);
+  --soft: light-dark(#45546a, #b6bfcc);
+  --muted: light-dark(#5a6778, #a3abb8);
+  --line: light-dark(#e4e9f0, #29313d);
+  --line-strong: light-dark(#d9e0ea, #333d4b);
+  --accent: light-dark(#a84e2b, #e08a63);
+  --accent-fg: light-dark(#ffffff, #13171d);
+  --accent-soft: light-dark(#f5e3d9, #3a2a22);
+  --focus: light-dark(#2563eb, #7aa7ff);
 
   /* The table, the same in light and dark */
   --felt-1: #1b8a55;
@@ -56,40 +58,14 @@
   --ch: calc(var(--cw) * 1.455); /* card height: the artwork is 167 x 243 */
   --chip: clamp(2.1rem, 8vw, 2.9rem);
 
+  color-scheme: light dark; /* follow the device... */
+}
+
+/* ...unless the visitor has picked one with the theme button */
+:root[data-theme='light'] {
   color-scheme: light;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #13171d;
-    --surface: #1a2029;
-    --panel: #1e2633;
-    --fg: #ece6da;
-    --soft: #b6bfcc;
-    --muted: #a3abb8;
-    --line: #29313d;
-    --line-strong: #333d4b;
-    --accent: #e08a63;
-    --accent-fg: #13171d;
-    --accent-soft: #3a2a22;
-    --focus: #7aa7ff;
-    color-scheme: dark;
-  }
-}
-
 :root[data-theme='dark'] {
-  --bg: #13171d;
-  --surface: #1a2029;
-  --panel: #1e2633;
-  --fg: #ece6da;
-  --soft: #b6bfcc;
-  --muted: #a3abb8;
-  --line: #29313d;
-  --line-strong: #333d4b;
-  --accent: #e08a63;
-  --accent-fg: #13171d;
-  --accent-soft: #3a2a22;
-  --focus: #7aa7ff;
   color-scheme: dark;
 }
 
