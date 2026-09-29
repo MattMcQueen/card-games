@@ -47,7 +47,7 @@
     <li>The "Support me" button shows Ko-fi's donation form, but only when you press it. Until then nothing is loaded from Ko-fi, and once you open it <a href="https://more.ko-fi.com/privacy" rel="noopener" target="_blank">Ko-fi's privacy policy</a> applies to that form.</li>
   </ul>
   <h3>Sound</h3>
-  <p>All the sounds are made by your browser as you play, not played from recordings. Use the speaker button to mute them. iPhones stay silent while the ringer switch is set to silent.</p>
+  <p>The card and chip sounds are recordings from Kenney's <a href="https://kenney.nl/assets/casino-audio" rel="noopener" target="_blank">Casino Audio</a> pack, which is free for anyone to use (Creative Commons Zero). The win, lose and blackjack jingles are made by your browser as you play. Use the speaker button to mute everything. iPhones stay silent while the ringer switch is set to silent.</p>
   <h3>Keyboard</h3>
   <p>H to hit, S to stand, D to double and P to split.</p>
   <h3>Supporting the site</h3>

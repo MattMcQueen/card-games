@@ -1,6 +1,7 @@
-// Every sound in the game is generated here with the Web Audio API: no audio files to
-// download, license or cache. Each sound is a function taking the time (in audio-clock
-// seconds) at which it should start.
+// The sounds. Card and chip noises are real recordings (Kenney's CC0 Casino Audio, converted by
+// scripts/build-sounds.mjs) that are fetched after the visitor's first tap; until they have
+// arrived, and for the win/lose jingles, the sounds are generated here with the Web Audio API.
+// Each sound is a function taking the time (in audio-clock seconds) at which it should start.
 
 export type SoundName =
   | 'deal'
@@ -15,6 +16,43 @@ export type SoundName =
   | 'gameOver';
 
 const MASTER_LEVEL = 0.7;
+
+// The recordings: sounds/deal-1.mp3, deal-2.mp3 ... grouped by the part before the number.
+const files = import.meta.glob<string>('./sounds/*.mp3', { eager: true, import: 'default', query: '?url' });
+const bank = new Map<string, AudioBuffer[]>();
+let loadingSamples = false;
+
+/** Fetches and decodes every recording. Safe to call repeatedly; only the first call does work. */
+function loadSamples(c: AudioContext): void {
+  if (loadingSamples) return;
+  loadingSamples = true;
+  for (const [path, url] of Object.entries(files)) {
+    const group = /\/([a-z]+)-\d+\.mp3$/.exec(path)?.[1];
+    if (!group) continue;
+    fetch(url)
+      .then((response) => response.arrayBuffer())
+      // the callback form is what older iPhones understand
+      .then((data) => new Promise<AudioBuffer>((resolve, reject) => c.decodeAudioData(data, resolve, reject)))
+      .then((buffer) => bank.set(group, [...(bank.get(group) ?? []), buffer]))
+      .catch(() => {
+        /* a recording that fails to load just means the generated sound is used instead */
+      });
+  }
+}
+
+/** Plays a random recording from a group, slightly varied so repeats don't sound identical. Returns false if none has loaded. */
+function sample(c: AudioContext, t: number, group: string, level = 1): boolean {
+  const list = bank.get(group);
+  if (!list?.length) return false;
+  const source = c.createBufferSource();
+  source.buffer = list[Math.floor(Math.random() * list.length)] as AudioBuffer;
+  source.playbackRate.value = 0.94 + Math.random() * 0.12;
+  const gain = c.createGain();
+  gain.gain.value = level;
+  source.connect(gain).connect(master as GainNode);
+  source.start(t);
+  return true;
+}
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -40,6 +78,7 @@ export function ensureAudio(): AudioContext | null {
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const data = noise.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    loadSamples(ctx);
   }
   if (ctx.state === 'suspended') void ctx.resume();
   return ctx;
@@ -112,6 +151,7 @@ const notes = { Bb3: 233.08, D4: 293.66, Eb4: 311.13, F4: 349.23, G4: 392, C4: 2
 const sounds: Record<SoundName, (c: AudioContext, t: number) => void> = {
   // A card sliding off the shoe and landing on the felt.
   deal(c, t) {
+    if (sample(c, t, 'deal', 0.9)) return;
     burst(c, t, { dur: 0.12, from: 1400, to: 5200, q: 0.9, gain: 0.5 });
     tone(c, t + 0.05, { freq: 170, endFreq: 70, dur: 0.06, gain: 0.25 });
     burst(c, t + 0.075, { dur: 0.03, from: 6000, to: 4000, q: 1.2, gain: 0.18 });
@@ -119,6 +159,7 @@ const sounds: Record<SoundName, (c: AudioContext, t: number) => void> = {
 
   // A riffle shuffle: a run of rapid card flicks, then a second, softer one.
   shuffle(c, t) {
+    if (sample(c, t, 'shuffle', 0.8)) return;
     for (let i = 0; i < 30; i++) {
       const at = t + i * 0.03 + Math.random() * 0.012;
       burst(c, at, { dur: 0.045, from: 2500, to: 4500, q: 1.1, gain: 0.1 + 0.08 * Math.sin((i / 29) * Math.PI) });
@@ -128,16 +169,23 @@ const sounds: Record<SoundName, (c: AudioContext, t: number) => void> = {
   },
 
   chip(c, t) {
+    if (sample(c, t, 'chip', 0.9)) return;
     clink(c, t);
   },
 
   // Winnings pushed across: a quick cascade of clinks.
   payout(c, t) {
+    // three chip clatters in quick succession
+    if (bank.get('payout')?.length) {
+      [0, 0.09, 0.19].forEach((offset) => sample(c, t + offset, 'payout', 0.85));
+      return;
+    }
     [0, 0.07, 0.13, 0.22].forEach((offset, i) => clink(c, t + offset, 0.9 + i * 0.07, 0.85));
   },
 
   // Losing chips raked away: a low sweep and one muted clink.
   sweep(c, t) {
+    if (sample(c, t, 'sweep', 0.85)) return;
     burst(c, t, { dur: 0.35, from: 900, to: 300, q: 0.7, gain: 0.3 });
     clink(c, t + 0.2, 0.75, 0.6);
   },
