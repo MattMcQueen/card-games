@@ -27,8 +27,8 @@
   .theme {
     display: inline-grid;
     place-items: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: var(--icon-button);
+    height: var(--icon-button);
     border: 1px solid var(--line);
     border-radius: 50%;
     background: var(--panel);

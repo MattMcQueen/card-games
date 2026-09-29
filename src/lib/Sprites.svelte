@@ -1,6 +1,6 @@
 <!-- Shared drawings, defined once and reused with <use>. Suits are paths, not text glyphs,
      so every phone and browser draws them identically (no emoji-style hearts). -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<svg class="sprites" width="0" height="0" aria-hidden="true" focusable="false">
   <defs>
     <symbol id="suit-H" viewBox="0 0 24 24">
       <path d="M12 22C5.5 16.2 2 12.6 2 8.4A5.4 5.4 0 0 1 12 5.6 5.4 5.4 0 0 1 22 8.4c0 4.2-3.5 7.8-10 13.6z" />
@@ -20,3 +20,9 @@
     </pattern>
   </defs>
 </svg>
+
+<style>
+  .sprites {
+    position: absolute;
+  }
+</style>

@@ -1,27 +1,17 @@
 <script lang="ts">
-  import { audio, setMuted, unlockAudio } from './sound.svelte';
-
-  function toggle() {
-    unlockAudio();
-    setMuted(!audio.muted);
-  }
-
-  const label = $derived(audio.muted ? 'Turn sound on' : 'Mute sound');
+  let { onclick }: { onclick: () => void } = $props();
 </script>
 
-<button type="button" class="sound" onclick={toggle} aria-label={label} aria-pressed={audio.muted} title={label}>
+<button type="button" class="kofi" {onclick} aria-label="Support me on Ko-fi" title="Support me on Ko-fi">
   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M11 5 6 9H3v6h3l5 4z" />
-    {#if audio.muted}
-      <path d="m16 9 6 6M22 9l-6 6" />
-    {:else}
-      <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
-    {/if}
+    <path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />
+    <path d="M17 10h1.500a2.500 2.500 0 0 1 0 5H17" />
+    <path d="M8 2v2M12 2v2" />
   </svg>
 </button>
 
 <style>
-  .sound {
+  .kofi {
     display: inline-grid;
     place-items: center;
     width: var(--icon-button);
@@ -32,7 +22,10 @@
     color: var(--ink);
     cursor: pointer;
   }
-  .sound:focus-visible {
+  .kofi:hover {
+    border-color: var(--accent);
+  }
+  .kofi:focus-visible {
     outline: 3px solid var(--accent);
     outline-offset: 2px;
   }
