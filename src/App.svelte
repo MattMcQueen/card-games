@@ -12,26 +12,63 @@
     startRound,
     type Action,
   } from './engine';
+  import Chip from './lib/Chip.svelte';
+  import { DENOMINATIONS } from './lib/chips';
+  import ChipStack from './lib/ChipStack.svelte';
   import HandView from './lib/HandView.svelte';
   import { outcomeLabel, signed } from './lib/labels';
+  import { reducedMotion, settleDelay } from './lib/motion';
+  import Shoe from './lib/Shoe.svelte';
+  import Sprites from './lib/Sprites.svelte';
+  import TableMarkings from './lib/TableMarkings.svelte';
+  import ThemeToggle from './lib/ThemeToggle.svelte';
 
   // The shoe is large and never edited in place, so it needs no deep reactivity.
   let game = $state.raw(newGame());
   let wanted = $state(10);
 
+  // After the dealer plays, the results wait until the dealer's cards have landed.
+  let revealed = $state(false);
+  $effect(() => {
+    if (game.phase !== 'settled') {
+      revealed = false;
+      return;
+    }
+    const id = setTimeout(() => (revealed = true), reducedMotion ? 0 : settleDelay(game.dealer.length));
+    return () => clearTimeout(id);
+  });
+
   const limit = $derived(maxBet(game));
-  const bet = $derived(Math.min(Math.max(wanted, MIN_BET), Math.max(limit, MIN_BET)));
+  const bet = $derived(Math.min(wanted, limit));
   const actions = $derived(legalActions(game));
   const over = $derived(isGameOver(game));
   const inRound = $derived(game.phase !== 'betting');
-  const bets = $derived(game.hands.reduce((sum, hand) => sum + hand.bet, 0));
+  const settling = $derived(game.phase === 'settled' && !revealed);
+  const showResults = $derived(game.phase === 'settled' && revealed);
 
-  const summary = $derived.by(() => {
-    if (game.phase !== 'settled') return '';
-    const parts = game.results.map((r) => `${outcomeLabel[r.outcome]} ${signed(r.net)}`);
-    return `Round over. ${parts.join(', ')}.${over ? ' You are out of chips.' : ''}`;
+  // Chips held, not counting winnings still to be revealed.
+  const shownChips = $derived(
+    settling ? game.chips - game.results.reduce((sum, r) => sum + r.returned, 0) : game.chips,
+  );
+
+  const netTotal = $derived(game.results.reduce((sum, r) => sum + r.net, 0));
+  const banner = $derived.by(() => {
+    if (!showResults) return null;
+    const blackjack = game.results.some((r) => r.outcome === 'blackjack');
+    if (netTotal > 0) return { kind: 'win', text: `${blackjack ? 'Blackjack! ' : ''}You win ${netTotal}` };
+    if (netTotal < 0) return { kind: 'lose', text: `Dealer wins ${-netTotal}` };
+    return { kind: 'push', text: 'Push' };
   });
 
+  const announcement = $derived.by(() => {
+    if (!showResults) return '';
+    const parts = game.results.map((r) => `${outcomeLabel[r.outcome]} ${signed(r.net)}`);
+    return `Round over. ${parts.join(', ')}. You have ${game.chips} chips.${over ? ' You are out of chips.' : ''}`;
+  });
+
+  function addChip(value: number) {
+    wanted = Math.min(bet + value, limit);
+  }
   function deal() {
     game = startRound(game, bet);
   }
@@ -58,59 +95,100 @@
 </script>
 
 <svelte:window {onkeydown} />
+<Sprites />
 
 <main>
   <header>
     <h1>Blackjack</h1>
-    <p class="chips" aria-label="Chips">
-      Chips: <strong>{game.chips}</strong>
-      {#if bets > 0 && game.phase === 'player'}<span class="on-table">(+{bets} on the table)</span>{/if}
-    </p>
+    <div class="header-right">
+      <p class="balance" aria-label="Chips: {shownChips}">
+        <span class="balance-chip"><Chip value={5} /></span>
+        <strong>{shownChips}</strong>
+      </p>
+      <ThemeToggle />
+    </div>
   </header>
 
-  <div class="sr-only" role="status" aria-live="polite">{summary}</div>
+  <div class="sr-only" role="status" aria-live="polite">{announcement}</div>
 
-  <div class="table">
-    {#if inRound}
-      <HandView title="Dealer" cards={game.dealer} />
-      {#each game.hands as hand, i (i)}
-        <HandView
-          title={game.hands.length > 1 ? `Your hand ${i + 1}` : 'Your hand'}
-          cards={hand.cards}
-          bet={hand.bet}
-          active={game.phase === 'player' && i === game.active}
-          result={game.results[i]}
-        />
-      {/each}
-      {#if game.shuffled}
-        <p class="note">The shoe was shuffled.</p>
+  <div class="rail">
+    <div class="felt">
+      <TableMarkings />
+      <div class="shoe-corner"><Shoe /></div>
+
+      <div class="zone dealer-zone">
+        {#if inRound}
+          <HandView title="Dealer" role="dealer" cards={game.dealer} hideTotal={settling} />
+        {/if}
+      </div>
+
+      <div class="zone player-zone">
+        {#if inRound}
+          <div class="hands">
+            {#each game.hands as hand, i (i)}
+              <HandView
+                title={game.hands.length > 1 ? `Hand ${i + 1}` : 'You'}
+                role="player"
+                cards={hand.cards}
+                bet={hand.bet}
+                active={game.phase === 'player' && i === game.active}
+                result={showResults ? game.results[i] : undefined}
+              />
+            {/each}
+          </div>
+        {:else}
+          <div class="bet-spot" class:empty={bet < MIN_BET}>
+            <span class="bet-label">Your bet</span>
+            <div class="bet-stack">
+              {#if bet >= MIN_BET}<ChipStack amount={bet} />{/if}
+            </div>
+            <span class="bet-amount">{bet}</span>
+          </div>
+        {/if}
+      </div>
+
+      {#if banner}
+        <p class="banner {banner.kind}" role="presentation">{banner.text}</p>
       {/if}
-    {:else}
-      <p class="prompt">Place your bet, from {MIN_BET} to {MAX_BET} chips.</p>
-    {/if}
+      {#if game.shuffled && inRound && !revealed}
+        <p class="shuffle-note">Shuffling a fresh shoe…</p>
+      {/if}
+    </div>
   </div>
 
   <div class="controls">
     {#if game.phase === 'betting'}
-      <div class="bet-row">
-        <button type="button" onclick={() => (wanted = bet - 1)} disabled={bet <= MIN_BET} aria-label="Decrease bet" title="Decrease bet">−</button>
-        <output aria-label="Bet">{bet}</output>
-        <button type="button" onclick={() => (wanted = bet + 1)} disabled={bet >= limit} aria-label="Increase bet" title="Increase bet">+</button>
-        {#each [5, 10, 20] as preset (preset)}
-          <button type="button" onclick={() => (wanted = preset)} disabled={preset > limit} aria-label="Bet {preset}" title="Bet {preset}">{preset}</button>
+      <p class="hint">Bet {MIN_BET} to {MAX_BET} chips</p>
+      <div class="rack">
+        {#each [...DENOMINATIONS].reverse() as value (value)}
+          <button
+            type="button"
+            class="chip-button"
+            onclick={() => addChip(value)}
+            disabled={bet >= limit}
+            aria-label="Add {value} to bet"
+            title="Add {value}"
+          >
+            <Chip {value} />
+          </button>
         {/each}
+        <button type="button" class="ghost" onclick={() => (wanted = 0)} disabled={bet === 0}>Clear</button>
       </div>
-      <button type="button" class="primary" onclick={deal} disabled={limit < MIN_BET}>Deal</button>
+      <button type="button" class="deal" onclick={deal} disabled={bet < MIN_BET}>Deal</button>
     {:else if game.phase === 'player'}
-      <button type="button" onclick={() => play('hit')} disabled={!actions.includes('hit')} title="Hit (H)" aria-keyshortcuts="H">Hit</button>
-      <button type="button" onclick={() => play('stand')} disabled={!actions.includes('stand')} title="Stand (S)" aria-keyshortcuts="S">Stand</button>
-      <button type="button" onclick={() => play('double')} disabled={!actions.includes('double')} title="Double down (D)" aria-keyshortcuts="D">Double</button>
-      <button type="button" onclick={() => play('split')} disabled={!actions.includes('split')} title="Split (P)" aria-keyshortcuts="P">Split</button>
+      <div class="actions">
+        <button type="button" class="act hit" onclick={() => play('hit')} disabled={!actions.includes('hit')} title="Hit (H)" aria-keyshortcuts="H">Hit</button>
+        <button type="button" class="act stand" onclick={() => play('stand')} disabled={!actions.includes('stand')} title="Stand (S)" aria-keyshortcuts="S">Stand</button>
+        <button type="button" class="act double" onclick={() => play('double')} disabled={!actions.includes('double')} title="Double down (D)" aria-keyshortcuts="D">Double</button>
+        <button type="button" class="act split" onclick={() => play('split')} disabled={!actions.includes('split')} title="Split (P)" aria-keyshortcuts="P">Split</button>
+      </div>
+    {:else if !showResults}
+      <div class="actions-spacer" aria-hidden="true"></div>
     {:else if over}
       <p class="over">Game over: you are out of chips.</p>
-      <button type="button" class="primary" onclick={restart}>Play again with {STARTING_CHIPS} chips</button>
+      <button type="button" class="deal" onclick={restart}>Play again with {STARTING_CHIPS} chips</button>
     {:else}
-      <button type="button" class="primary" onclick={again}>Next hand</button>
+      <button type="button" class="deal" onclick={again}>Next hand</button>
     {/if}
   </div>
 
@@ -121,86 +199,280 @@
 
 <style>
   main {
-    max-width: 42rem;
+    max-width: 58rem;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 0.75rem 1rem 1.5rem;
     display: grid;
-    gap: 1rem;
+    gap: 0.9rem;
   }
   header {
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
   h1 {
     margin: 0;
-    font-size: 1.6rem;
+    font: 700 1.7rem Georgia, 'Times New Roman', serif;
+    letter-spacing: 0.04em;
   }
-  .chips {
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .balance {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
     margin: 0;
-    font-size: 1.1rem;
+    padding: 0.25rem 0.9rem 0.25rem 0.35rem;
+    border: 1px solid var(--line);
+    border-radius: 2rem;
+    background: var(--panel);
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
   }
-  .on-table,
-  .note,
-  footer p {
-    opacity: 0.8;
-    font-size: 0.9rem;
+  .balance-chip {
+    width: 1.9rem;
+    height: 1.9rem;
   }
-  .table {
+
+  /* The table: a walnut rail around green felt. */
+  .rail {
+    padding: clamp(0.5rem, 1.6vw, 0.9rem);
+    border-radius: clamp(1.2rem, 4vw, 2.4rem);
+    background: linear-gradient(160deg, #6b4423, #3d2410 55%, #5a3a1e);
+    box-shadow:
+      0 10px 30px rgb(0 0 0 / 0.45),
+      inset 0 1px 1px rgb(255 255 255 / 0.25);
+  }
+  .felt {
+    position: relative;
     display: grid;
+    grid-template-rows: auto 1fr;
     gap: 0.5rem;
-    min-height: 16rem;
-    align-content: start;
+    min-height: clamp(27rem, 62vh, 36rem);
+    padding: 1rem 0.5rem 1rem;
+    border-radius: clamp(0.8rem, 3vw, 1.7rem);
+    overflow: hidden;
+    color: #fff;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse at 50% 40%, #1b8a55 0%, #0f6b3f 55%, #084a2b 100%);
+    box-shadow: inset 0 0 40px rgb(0 0 0 / 0.55);
   }
-  .prompt {
-    margin: 2rem 0;
-    text-align: center;
+  .shoe-corner {
+    position: absolute;
+    top: 0.8rem;
+    right: 1rem;
   }
-  .note {
+  .zone {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .dealer-zone {
+    min-height: calc(var(--cw) * 1.4 + 4rem);
+  }
+  .player-zone {
+    align-self: end;
+  }
+  .hands {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 0.5rem;
+  }
+
+  .bet-spot {
+    display: grid;
+    justify-items: center;
+    align-content: end;
+    gap: 0.3rem;
+    width: calc(var(--chip) * 3.2);
+    height: calc(var(--chip) * 3.2);
+    border: 2px solid rgb(244 224 160 / 0.5);
+    border-radius: 50%;
+    padding-bottom: 0.4rem;
+  }
+  .bet-spot.empty {
+    border-style: dashed;
+  }
+  .bet-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(244 224 160 / 0.8);
+  }
+  .bet-stack {
+    min-height: calc(var(--chip) * 1.6);
+    display: flex;
+    align-items: flex-end;
+  }
+  .bet-amount {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .banner {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    z-index: 2;
     margin: 0;
+    padding: 0.5rem 1.4rem;
+    border-radius: 3rem;
+    font: 800 clamp(1.1rem, 4vw, 1.6rem) Georgia, 'Times New Roman', serif;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.5);
+    animation: banner-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
   }
+  .banner.win {
+    background: linear-gradient(#ffe082, #ffca28);
+    color: #2b2100;
+  }
+  .banner.lose {
+    background: linear-gradient(#a02222, #741212);
+    color: #fff;
+  }
+  .banner.push {
+    background: linear-gradient(#eceff1, #b0bec5);
+    color: #1c2a30;
+  }
+  .shuffle-note {
+    position: absolute;
+    left: 1rem;
+    top: 0.9rem;
+    margin: 0;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: rgb(255 255 255 / 0.75);
+  }
+  @keyframes banner-in {
+    from {
+      transform: translate(-50%, -50%) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  /* Controls */
   .controls {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    min-height: 4.2rem;
   }
-  .bet-row {
+  .hint {
+    flex-basis: 100%;
+    margin: 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .rack {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.6rem;
   }
-  output {
-    min-width: 2.5rem;
-    text-align: center;
-    font-size: 1.3rem;
-    font-weight: 700;
+  .chip-button {
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    transition: transform 0.12s;
+  }
+  .chip-button:hover:not(:disabled) {
+    transform: translateY(-3px);
+  }
+  .chip-button:active:not(:disabled) {
+    transform: translateY(0) scale(0.95);
+  }
+  .chip-button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .actions-spacer {
+    height: 3rem;
   }
   button {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    padding: 0.4rem 0.9rem;
-    border: 0;
-    border-radius: 0.5rem;
-    background: #f4f1e8;
-    color: #111;
     font: inherit;
-    font-weight: 600;
-    cursor: pointer;
   }
-  button:disabled {
+  button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .act,
+  .deal,
+  .ghost {
+    min-width: 5.2rem;
+    min-height: 3rem;
+    padding: 0.5rem 1.3rem;
+    border: 0;
+    border-radius: 3rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    cursor: pointer;
+    box-shadow:
+      0 3px 0 rgb(0 0 0 / 0.35),
+      0 6px 12px rgb(0 0 0 / 0.25);
+    transition: transform 0.1s, box-shadow 0.1s, filter 0.15s;
+  }
+  .act:hover:not(:disabled),
+  .deal:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+  .act:active:not(:disabled),
+  .deal:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.35);
+  }
+  .act:disabled,
+  .deal:disabled,
+  .ghost:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
-  button:focus-visible {
-    outline: 3px solid #ffd54f;
-    outline-offset: 2px;
+  .hit {
+    background: linear-gradient(#3fa34d, #2a7a36);
   }
-  .primary {
-    background: #ffd54f;
+  .stand {
+    background: linear-gradient(#d13b3b, #a02222);
+  }
+  .double {
+    background: linear-gradient(#f0b429, #cc8c0a);
+    color: #2b1d00;
+  }
+  .split {
+    background: linear-gradient(#2f80d9, #1a5aa8);
+  }
+  .deal {
+    min-width: 9rem;
+    background: linear-gradient(#ffe082, #ffb300);
+    color: #2b1d00;
+  }
+  .ghost {
+    min-width: 0;
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    box-shadow: none;
+    text-transform: none;
+    font-weight: 600;
   }
   .over {
     flex-basis: 100%;
@@ -211,6 +483,8 @@
   footer p {
     margin: 0;
     text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
   }
   .sr-only {
     position: absolute;
@@ -219,5 +493,10 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .banner {
+      animation: none;
+    }
   }
 </style>
