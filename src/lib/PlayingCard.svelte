@@ -1,31 +1,85 @@
 <script lang="ts">
   import type { Card } from '../engine';
+  import { isFaceCard, pipsFor } from './cardLayout';
+  import { deal } from './motion';
 
-  let { card }: { card: Card } = $props();
+  let { card, delay = 0 }: { card: Card; delay?: number } = $props();
 
-  const symbols = { S: '♠', H: '♥', D: '♦', C: '♣' } as const;
   const names = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' } as const;
   const red = $derived(card.suit === 'H' || card.suit === 'D');
+  const pips = $derived(pipsFor(card.rank));
+  const face = $derived(isFaceCard(card.rank));
+  const ace = $derived(card.rank === 'A');
 </script>
 
-<span class="card" class:red role="img" aria-label="{card.rank} of {names[card.suit]}">
-  <span aria-hidden="true">{card.rank}{symbols[card.suit]}</span>
-</span>
+<svg
+  class="card"
+  class:red
+  viewBox="0 0 100 140"
+  role="img"
+  aria-label="{card.rank} of {names[card.suit]}"
+  in:deal|global={{ delay }}
+>
+  <rect class="face" x="0.75" y="0.75" width="98.5" height="138.5" rx="8" />
+
+  {#each [false, true] as flipped (flipped)}
+    <g transform={flipped ? 'rotate(180 50 70)' : undefined}>
+      <text class="index" x="12.5" y="23" text-anchor="middle" font-size={card.rank === '10' ? 16 : 19}>{card.rank}</text>
+      <use href="#suit-{card.suit}" x="5.5" y="27" width="14" height="14" />
+    </g>
+  {/each}
+
+  {#if ace}
+    <use href="#suit-{card.suit}" x="26" y="46" width="48" height="48" />
+  {:else if face}
+    <rect class="frame" x="21" y="24" width="58" height="92" rx="4" />
+    <text class="court" x="50" y="88" text-anchor="middle" font-size="52">{card.rank}</text>
+    <use href="#suit-{card.suit}" x="43" y="28" width="14" height="14" />
+    <use href="#suit-{card.suit}" x="43" y="98" width="14" height="14" transform="rotate(180 50 105)" />
+  {:else}
+    {#each pips as pip, i (i)}
+      <use
+        href="#suit-{card.suit}"
+        x={pip.x - 9.5}
+        y={pip.y - 9.5}
+        width="19"
+        height="19"
+        transform={pip.flip ? `rotate(180 ${pip.x} ${pip.y})` : undefined}
+      />
+    {/each}
+  {/if}
+</svg>
 
 <style>
   .card {
-    display: inline-grid;
-    place-items: center;
-    width: 3.2rem;
-    height: 4.5rem;
-    border-radius: 0.4rem;
-    background: #fff;
-    color: #111;
-    font-size: 1.2rem;
-    font-weight: 700;
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+    width: var(--cw);
+    height: calc(var(--cw) * 1.4);
+    flex: none;
+    color: #1c1c1c;
+    fill: currentColor;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
   }
   .red {
-    color: #c62828;
+    color: #c8102e;
+  }
+  .face {
+    fill: #fdfcf8;
+    stroke: #c9c5b8;
+    stroke-width: 1;
+  }
+  .index {
+    font: 700 19px Georgia, 'Times New Roman', serif;
+    fill: currentColor;
+  }
+  .court {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    fill: currentColor;
+  }
+  .frame {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    opacity: 0.55;
   }
 </style>
