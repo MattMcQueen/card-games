@@ -41,8 +41,16 @@ describe('security headers', () => {
 
 describe('caching', () => {
   it('keeps fingerprinted assets for a year and pages for ten minutes', () => {
-    const assets = config.routes.find((r) => r.route === '/assets/*');
+    const assets = config.routes.find((r) => r.route === '/assets/*') as { headers: Record<string, string> };
     expect(assets?.headers['Cache-Control']).toContain('immutable');
     expect(headers['Cache-Control']).toBe('public, max-age=600');
+  });
+});
+
+describe('pages', () => {
+  it('serves the game for the addresses of its other pages, so they can be opened or refreshed', () => {
+    for (const route of ['/how-to-play', '/how-to-play/', '/about', '/about/']) {
+      expect(config.routes.find((r) => r.route === route)).toMatchObject({ rewrite: '/index.html' });
+    }
   });
 });

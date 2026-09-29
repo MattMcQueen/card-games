@@ -25,4 +25,14 @@ there is no login, and no advertising. The site is funded by a Ko-fi "Support me
 - Card artwork: Byron Knoll's vector playing cards, released into the public domain
   (https://commons.wikimedia.org/wiki/Category:Playing_cards_set_by_Byron_Knoll). They are converted to small
   WebP images by `scripts/build-cards.mjs` (see the comments at the top for how to rebuild them).
-- Sound effects are synthesised in the browser; there are no audio recordings.
+- Card and chip sounds: recordings from Kenney's Casino Audio pack (https://kenney.nl/assets/casino-audio), released under
+  Creative Commons Zero. The win, lose and blackjack jingles are synthesised in the browser.
+- Fonts: Figtree, Young Serif and DM Sans, under the SIL Open Font License (see `src/fonts/README.md`).
+
+## Look and feel
+
+The site is styled to match Brand New (https://brand-new.matt-rarely-writes.co.uk): the same slate colours, terracotta
+accent, fonts, pill navigation, flat pill buttons and floating "Support me" button. The colours are tokens in
+`src/app.css`, including the table's own felt, walnut and gold. The menu has Game, How to play and About; they are
+real addresses (`/`, `/how-to-play`, `/about`) that the host serves the same page for, so the game keeps running while
+you read the rules.

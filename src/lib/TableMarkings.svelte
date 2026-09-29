@@ -1,5 +1,10 @@
 <!-- Printed lettering on the felt, like a real casino table. -->
-<svg class="markings" viewBox="0 0 800 260" aria-hidden="true" focusable="false">
+<script lang="ts">
+  /** Once the cards are out the lettering fades away, so it never shows through the hands. */
+  let { faded = false }: { faded?: boolean } = $props();
+</script>
+
+<svg class="markings" class:faded viewBox="0 0 800 260" aria-hidden="true" focusable="false">
   <defs>
     <path id="arc-outer" d="M 70 60 A 400 200 0 0 0 730 60" />
     <path id="arc-inner" d="M 170 150 A 300 140 0 0 0 630 150" />
@@ -16,10 +21,14 @@
     width: min(92%, 46rem);
     transform: translate(-50%, -55%);
     pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .faded {
+    opacity: 0;
   }
   text {
-    fill: rgb(244 224 160 / 0.38);
-    font-family: Georgia, 'Times New Roman', serif;
+    fill: color-mix(in srgb, var(--gold) 38%, transparent);
+    font-family: var(--serif);
     text-transform: uppercase;
   }
   .big {

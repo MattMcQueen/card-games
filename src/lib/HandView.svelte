@@ -13,6 +13,7 @@
     active = false,
     hideTotal = false,
     result,
+    showPill = false,
   }: {
     title: string;
     role: 'dealer' | 'player';
@@ -22,6 +23,8 @@
     /** Hold the total back while the dealer's cards are still arriving. */
     hideTotal?: boolean;
     result?: HandResult;
+    /** Label the hand with its own result: only needed when there are several hands to tell apart. */
+    showPill?: boolean;
   } = $props();
 
   const value = $derived(handValue(cards));
@@ -60,9 +63,11 @@
     </div>
   {/if}
 
-  <p class="pill {result ? result.outcome : 'hidden'}" aria-hidden={!result}>
-    {#if result}{outcomeLabel[result.outcome]} {signed(result.net)}{:else}&nbsp;{/if}
-  </p>
+  {#if showPill}
+    <p class="pill {result ? result.outcome : 'hidden'}" aria-hidden={!result}>
+      {#if result}{outcomeLabel[result.outcome]} {signed(result.net)}{:else}&nbsp;{/if}
+    </p>
+  {/if}
 </section>
 
 <style>
@@ -76,7 +81,7 @@
     transition: border-color 0.2s, background 0.2s;
   }
   .active {
-    border-color: rgb(255 213 79 / 0.85);
+    border-color: color-mix(in srgb, var(--highlight) 85%, transparent);
     background: rgb(0 0 0 / 0.12);
   }
   h2 {
@@ -88,7 +93,7 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgb(255 255 255 / 0.85);
+    color: color-mix(in srgb, var(--on-felt) 85%, transparent);
   }
   .total {
     padding: 0.05rem 0.5rem;
@@ -112,7 +117,7 @@
   }
   .amount {
     align-self: center;
-    color: rgb(255 255 255 / 0.85);
+    color: color-mix(in srgb, var(--on-felt) 85%, transparent);
     font-size: 0.85rem;
     font-weight: 700;
   }
@@ -131,17 +136,17 @@
   }
   .win,
   .blackjack {
-    background: #ffd54f;
-    color: #2b2100;
+    background: var(--win-bg);
+    color: var(--win-fg);
   }
   .lose,
   .bust {
-    background: #8e1b1b;
-    color: #fff;
+    background: var(--lose-bg);
+    color: var(--lose-fg);
   }
   .push {
-    background: #cfd8dc;
-    color: #1c2a30;
+    background: var(--push-bg);
+    color: var(--push-fg);
   }
   @keyframes pop {
     from {

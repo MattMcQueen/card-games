@@ -9,7 +9,7 @@
   const label = $derived(audio.muted ? 'Turn sound on' : 'Mute sound');
 </script>
 
-<button type="button" class="sound" onclick={toggle} aria-label={label} aria-pressed={audio.muted} title={label}>
+<button type="button" class="icon-btn" onclick={toggle} aria-label={label} aria-pressed={audio.muted} title={label}>
   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M11 5 6 9H3v6h3l5 4z" />
     {#if audio.muted}
@@ -19,21 +19,3 @@
     {/if}
   </svg>
 </button>
-
-<style>
-  .sound {
-    display: inline-grid;
-    place-items: center;
-    width: var(--icon-button);
-    height: var(--icon-button);
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    background: var(--panel);
-    color: var(--ink);
-    cursor: pointer;
-  }
-  .sound:focus-visible {
-    outline: 3px solid var(--accent);
-    outline-offset: 2px;
-  }
-</style>
