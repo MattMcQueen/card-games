@@ -16,9 +16,12 @@
   import { DENOMINATIONS } from './lib/chips';
   import ChipStack from './lib/ChipStack.svelte';
   import HandView from './lib/HandView.svelte';
+  import { cuesFor } from './lib/cues';
   import { outcomeLabel, signed } from './lib/labels';
   import { reducedMotion, settleDelay } from './lib/motion';
   import Shoe from './lib/Shoe.svelte';
+  import { playCues, unlockAudio } from './lib/sound.svelte';
+  import SoundToggle from './lib/SoundToggle.svelte';
   import Sprites from './lib/Sprites.svelte';
   import TableMarkings from './lib/TableMarkings.svelte';
   import ThemeToggle from './lib/ThemeToggle.svelte';
@@ -66,19 +69,31 @@
     return `Round over. ${parts.join(', ')}. You have ${game.chips} chips.${over ? ' You are out of chips.' : ''}`;
   });
 
+  // Every change of game state goes through here so the matching sounds are played.
+  // Browsers only start audio from a tap or key press, and all of these run from one.
+  function update(next: typeof game) {
+    unlockAudio();
+    playCues(cuesFor(game, next));
+    game = next;
+  }
+
   function addChip(value: number) {
+    unlockAudio();
+    playCues([{ sound: 'chip', at: 0 }]);
     wanted = Math.min(bet + value, limit);
   }
   function deal() {
-    game = startRound(game, bet);
+    update(startRound(game, bet));
   }
   function play(action: Action) {
-    game = act(game, action);
+    update(act(game, action));
   }
   function again() {
-    game = nextRound(game);
+    update(nextRound(game));
   }
   function restart() {
+    unlockAudio();
+    playCues([{ sound: 'shuffle', at: 0 }]);
     game = newGame();
     wanted = 10;
   }
@@ -105,6 +120,7 @@
         <span class="balance-chip"><Chip value={5} /></span>
         <strong>{shownChips}</strong>
       </p>
+      <SoundToggle />
       <ThemeToggle />
     </div>
   </header>
