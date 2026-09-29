@@ -10,15 +10,18 @@
   // from Ko-fi is loaded, so visitors who never ask for it never contact Ko-fi.
   let opened = $state(false);
 
-  function toggle() {
+  // The button is a native popover invoker (popovertarget), so the browser opens and closes the
+  // panel. Calling togglePopover() here instead would reopen it on every click meant to close it:
+  // a click outside the panel closes it first (light dismiss), and the toggle would open it again.
+  function onclick(event: MouseEvent) {
     // Ko-fi shows phones a layout built for a whole screen, which doesn't fit in a panel, so
     // on a phone its own page opens in a new tab instead.
     if (matchMedia('(max-width: 600px)').matches) {
+      event.preventDefault(); // stops the panel from opening
       window.open(KOFI_URL, '_blank', 'noopener');
       return;
     }
     opened = true;
-    panel.togglePopover();
   }
 
   // Keep the button from covering other buttons: while a button or small link is underneath it,
@@ -73,13 +76,14 @@
     type="button"
     class="support-btn"
     class:is-tucked={tucked}
-    onclick={toggle}
+    popovertarget="kofi-panel"
+    {onclick}
     title="Support Blackjack on Ko-fi"
     aria-label="Support me on Ko-fi"
   >
     <img src={logo} width="39" height="31" alt="" /><span>Support me</span>
   </button>
-  <div class="support-panel" bind:this={panel} popover="auto" ontoggle={queue}>
+  <div class="support-panel" id="kofi-panel" bind:this={panel} popover="auto" ontoggle={queue}>
     <div class="support-head">
       <p><strong>Support Blackjack</strong></p>
       <button class="icon-btn" type="button" onclick={() => panel.hidePopover()} title="Close" aria-label="Close">
