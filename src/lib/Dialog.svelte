@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  let { title, children }: { title: string; children: Snippet } = $props();
+  let { title, children, narrow = false }: { title: string; children: Snippet; narrow?: boolean } = $props();
 
   let element: HTMLDialogElement;
   const titleId = `dialog-title-${Math.random().toString(36).slice(2, 8)}`;
@@ -20,7 +20,7 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-<dialog bind:this={element} aria-labelledby={titleId} {onclick}>
+<dialog bind:this={element} class:narrow aria-labelledby={titleId} {onclick}>
   <header>
     <h2 id={titleId}>{title}</h2>
     <button type="button" class="close" onclick={close} aria-label="Close" title="Close">
@@ -45,6 +45,15 @@
     color: var(--ink);
     box-shadow: 0 20px 60px rgb(0 0 0 / 0.5);
     overflow: hidden;
+  }
+  /* A tall, slim panel for the Ko-fi form, which is laid out for a narrow column. */
+  dialog.narrow {
+    width: min(26rem, calc(100vw - 0.5rem));
+    max-width: none; /* the browser default keeps dialogs 38px clear of the screen edges */
+    max-height: calc(100dvh - 1rem);
+  }
+  dialog.narrow .body {
+    padding: 0; /* the Ko-fi form needs about 340px of width, so it gets all of it */
   }
   dialog[open] {
     display: flex;

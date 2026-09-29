@@ -9,12 +9,18 @@
   let opened = $state(false);
 
   export function show() {
+    // Ko-fi shows phones a layout built for a whole screen, which doesn't fit in a panel, so
+    // on a phone its own page opens in a new tab instead.
+    if (matchMedia('(max-width: 600px)').matches) {
+      window.open(KOFI_URL, '_blank', 'noopener');
+      return;
+    }
     opened = true;
     dialog.show();
   }
 </script>
 
-<Dialog bind:this={dialog} title="Support me on Ko-fi">
+<Dialog bind:this={dialog} title="Support me on Ko-fi" narrow>
   {#if opened}
     <iframe
       title="Support me on Ko-fi"
@@ -29,13 +35,14 @@
   iframe {
     display: block;
     width: 100%;
-    height: min(30rem, 62dvh);
+    /* As tall as the screen allows, so the whole form shows without much scrolling. */
+    height: clamp(20rem, calc(100dvh - 9rem), 46rem);
     border: 0;
-    border-radius: 0.5rem;
     background: #fff;
   }
   .foot {
-    margin: 0.75rem 0 0;
+    margin: 0;
+    padding: 0.6rem 0.75rem 0.75rem;
     font-size: 0.9rem;
     text-align: center;
   }

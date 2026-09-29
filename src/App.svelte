@@ -19,12 +19,14 @@
   import InfoDialogs from './lib/InfoDialogs.svelte';
   import KofiButton from './lib/KofiButton.svelte';
   import KofiDialog from './lib/KofiDialog.svelte';
+  import { preloadCards } from './lib/cardImages';
   import { cuesFor } from './lib/cues';
   import { outcomeLabel, signed } from './lib/labels';
   import { reducedMotion, settleDelay } from './lib/motion';
   import Shoe from './lib/Shoe.svelte';
   import { playCues, unlockAudio } from './lib/sound.svelte';
   import SoundToggle from './lib/SoundToggle.svelte';
+  import SupportButton from './lib/SupportButton.svelte';
   import Sprites from './lib/Sprites.svelte';
   import TableMarkings from './lib/TableMarkings.svelte';
   import ThemeToggle from './lib/ThemeToggle.svelte';
@@ -78,12 +80,14 @@
   // Browsers only start audio from a tap or key press, and all of these run from one.
   function update(next: typeof game) {
     unlockAudio();
+    preloadCards();
     playCues(cuesFor(game, next));
     game = next;
   }
 
   function addChip(value: number) {
     unlockAudio();
+    preloadCards();
     playCues([{ sound: 'chip', at: 0 }]);
     wanted = Math.min(bet + value, limit);
   }
@@ -115,7 +119,7 @@
   }
 </script>
 
-<svelte:window {onkeydown} />
+<svelte:window {onkeydown} onpointerdown={preloadCards} />
 <Sprites />
 
 <main>
@@ -210,11 +214,10 @@
     {:else if over}
       <p class="over">Game over: you are out of chips.</p>
       <button type="button" class="deal" onclick={restart}>Play again with {STARTING_CHIPS} chips</button>
-      <p class="over-support">
-        Enjoyed it? <button type="button" class="link" onclick={() => kofi.show()}>Buy me a coffee on Ko-fi</button>
-      </p>
+      <SupportButton onclick={() => kofi.show()} />
     {:else}
       <button type="button" class="deal" onclick={again}>Next hand</button>
+      <SupportButton onclick={() => kofi.show()} />
     {/if}
   </div>
 
@@ -307,7 +310,7 @@
     align-items: flex-start;
   }
   .dealer-zone {
-    min-height: calc(var(--cw) * 1.4 + 4rem);
+    min-height: calc(var(--ch) + 4rem);
   }
   .player-zone {
     align-self: end;
@@ -537,16 +540,6 @@
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
-  }
-  .over-support {
-    flex-basis: 100%;
-    margin: 0;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-  .over-support .link {
-    min-height: 0;
   }
   .sr-only {
     position: absolute;

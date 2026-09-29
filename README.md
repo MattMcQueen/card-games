@@ -19,3 +19,10 @@ there is no login, and no advertising. The site is funded by a Ko-fi "Support me
   - Split aces get one card each, cannot be re-split and cannot double.
   - A two-card 21 after a split counts as blackjack (3:2).
 - Refreshing the page restarts the game.
+
+## Credits
+
+- Card artwork: Byron Knoll's vector playing cards, released into the public domain
+  (https://commons.wikimedia.org/wiki/Category:Playing_cards_set_by_Byron_Knoll). They are converted to small
+  WebP images by `scripts/build-cards.mjs` (see the comments at the top for how to rebuild them).
+- Sound effects are synthesised in the browser; there are no audio recordings.

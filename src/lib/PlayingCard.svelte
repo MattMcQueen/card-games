@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Card } from '../engine';
+  import { cardImage } from './cardImages';
   import { isFaceCard, pipsFor } from './cardLayout';
   import { deal } from './motion';
 
@@ -10,15 +11,28 @@
   const pips = $derived(pipsFor(card.rank));
   const face = $derived(isFaceCard(card.rank));
   const ace = $derived(card.rank === 'A');
+
+  // The photo-quality artwork is fetched separately, so a simple drawn card stands in until it
+  // has arrived (a slow connection, or the first card of a game). Once it has, it replaces it.
+  const src = $derived(cardImage(card));
+  let image = $state<HTMLImageElement>();
+  let ready = $state(false);
+  $effect(() => {
+    if (image?.complete && image.naturalWidth > 0) ready = true;
+  });
 </script>
 
+<div class="card" role="img" aria-label="{card.rank} of {names[card.suit]}" in:deal|global={{ delay }}>
+{#if src}
+  <img bind:this={image} {src} alt="" draggable="false" class:ready onload={() => (ready = true)} />
+{/if}
 <svg
-  class="card"
+  class="fallback"
   class:red
+  class:hidden={ready}
   viewBox="0 0 100 140"
-  role="img"
-  aria-label="{card.rank} of {names[card.suit]}"
-  in:deal|global={{ delay }}
+  preserveAspectRatio="none"
+  aria-hidden="true"
 >
   <rect class="face" x="0.75" y="0.75" width="98.5" height="138.5" rx="8" />
 
@@ -49,15 +63,37 @@
     {/each}
   {/if}
 </svg>
+</div>
 
 <style>
   .card {
+    position: relative;
     width: var(--cw);
-    height: calc(var(--cw) * 1.4);
+    height: var(--ch);
     flex: none;
+    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
+  }
+  img,
+  .fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  img {
+    opacity: 0;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  img.ready {
+    opacity: 1;
+  }
+  .fallback {
     color: #1c1c1c;
     fill: currentColor;
-    filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
+  }
+  .hidden {
+    visibility: hidden;
   }
   .red {
     color: #c8102e;
