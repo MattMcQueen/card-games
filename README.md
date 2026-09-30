@@ -1,0 +1,71 @@
+# Texas Hold'em
+
+A free, single-player Texas Hold'em game against five computer players, played entirely in the browser.
+
+Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,
+there is no login, and no advertising. The site is funded by a Ko-fi "Support me" button.
+
+Built from the same pieces as the sister blackjack site (Svelte 5, Vite, TypeScript, a pure and
+well-tested rules engine, no backend).
+
+## Rules
+
+The game follows the rules of a UK casino cash game.
+
+- Six seats: you (seat 0) and five computer players. Everyone starts with 1000 chips. Blinds are 5 and 10 and never change; there are no antes.
+- No-limit Texas Hold'em. The button moves one seat clockwise each hand; the two seats after it post the small and big blinds.
+- Each hand uses a fresh, cryptographically shuffled 52-card deck. A card is burned before the flop, turn and river.
+- Betting: fold, check, call, bet/raise (any amount up to the whole stack) or all-in.
+  - The minimum bet after the flop is a big blind. A raise must be at least as big as the last bet or raise in the round.
+  - The big blind has the option to raise if everyone just calls before the flop.
+  - An all-in for less than a full raise does not reopen the betting for players who have already acted, unless
+    several short all-ins add up to a full raise (a player may raise again once the bet has gone up by a full raise since they acted).
+  - Side pots are made for every all-in level. A bet nobody can call is handed back.
+  - Ties split the pot; an odd chip goes to the winning seat nearest the left of the button.
+  - When everyone left is all-in (or only one player has chips left to act), the rest of the board is dealt with no more betting.
+- At a showdown every remaining hand is turned over. If everyone else folds, the last player wins without showing.
+- No rake or time charge.
+- Computer players who fall below one big blind buy back in for 1000 (as new players sit at a real table). If you lose all your chips the game is over and can be restarted.
+- Refreshing the page restarts the game.
+
+## The computer players
+
+`src/engine/bot.ts`. Before the flop they use the Chen formula to rate their starting hand against a threshold that
+depends on position, the number of raises and how deep their stack is. After the flop they estimate their equity by
+dealing out the rest of the hand a few hundred times against random hands, shade it down when facing a bet, and compare
+it with the pot odds. Each seat has its own personality (how loose, how aggressive, how often it bluffs). They only see
+what a real player would see, and the engine checks that every move they make is legal.
+
+## Structure
+
+- `src/engine/` - the rules, with no UI: `game.ts` (dealing, betting rounds, settlement), `evaluate.ts` (hand ranking,
+  packed into one number so hands compare with `>`), `pots.ts` (side pots), `bot.ts`, `deck.ts`.
+  Everything is immutable: `act(state, action)` returns the next state. Tests include rigged decks for showdowns and side pots,
+  and random play that checks no chips are ever created or lost.
+- `src/lib/` - the Svelte components, sounds (`cues.ts` decides which sound goes with a change of state) and timing (`motion.ts`).
+- `src/App.svelte` - holds the game state and takes the computer players' turns a little apart so you can follow.
+
+## Commands
+
+```
+npm run dev      # start the dev server
+npm test         # run the tests
+npm run check    # type-check
+npm run build    # production build in dist/
+```
+
+## Credits
+
+- Card artwork: Byron Knoll's vector playing cards, released into the public domain
+  (https://commons.wikimedia.org/wiki/Category:Playing_cards_set_by_Byron_Knoll). They are converted to small
+  WebP images by `scripts/build-cards.mjs` (see the comments at the top for how to rebuild them).
+- Card and chip sounds: recordings from Kenney's Casino Audio pack (https://kenney.nl/assets/casino-audio), released under
+  Creative Commons Zero. The win and lose jingles are synthesised in the browser.
+- Fonts: Figtree, Young Serif and DM Sans, under the SIL Open Font License (see `src/fonts/README.md`).
+
+## Look and feel
+
+Styled to match the blackjack site and Brand New: slate colours, terracotta accent, pill navigation and the floating
+"Support me" button. The colours are tokens in `src/app.css`, including the table's own felt, walnut and gold. The menu has
+Game, How to play and About; they are real addresses (`/`, `/how-to-play`, `/about`) that the host serves the same page
+for (`public/staticwebapp.config.json`), so the game keeps running while you read the rules.
