@@ -57,6 +57,6 @@ describe('cuesFor', () => {
   it('spaces the sounds by the animation times when motion is allowed', () => {
     const g = play(start(), 'call', 'call', 'call', 'call', 'call');
     const flop = cuesFor(g, act(g, { type: 'check' }), false).filter((c) => c.sound === 'deal');
-    expect(flop.map((c) => c.at)).toEqual([0, 0.15, 0.3]);
+    expect(flop.map((c) => c.at)).toEqual([0, 0.26, 0.52]);
   });
 });

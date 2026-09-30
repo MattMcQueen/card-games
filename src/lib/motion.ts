@@ -5,24 +5,54 @@ import { SEATS } from '../engine';
 export const reducedMotion =
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** How long a card takes to land, in milliseconds. */
-const DEAL_MS = 380;
+/** How long a card takes to fly from the deck and turn over, in milliseconds. */
+const DEAL_DURATION = 620;
 /** Between the cards of the flop. */
-const FLOP_GAP = 150;
+const FLOP_GAP = 260;
 /** Between the flop, turn and river when they are dealt one after another (everyone all-in). */
-const STREET_GAP = 900;
+const STREET_GAP = 1100;
 /** Between the cards of the deal at the start of a hand. */
-const HOLE_GAP = 90;
+const HOLE_GAP = 150;
 
-/** A card sliding onto the table from the dealer. */
-export function deal(node: Element, { delay = 0, duration = DEAL_MS, still = false } = {}) {
+/** How far, in pixels, a card is from the deck on the table: the way it has to fly. */
+function fromDeck(node: Element): { dx: number; dy: number } {
+  const deck = document.getElementById('deck')?.getBoundingClientRect();
+  if (!deck) return { dx: 0, dy: -110 };
+  const to = node.getBoundingClientRect();
+  return {
+    dx: deck.left + deck.width / 2 - (to.left + to.width / 2),
+    dy: deck.top + deck.height / 2 - (to.top + to.height / 2),
+  };
+}
+
+/** A card flying to its place from the deck, with a slight lift mid-flight. `still`: it is already there. */
+export function deal(node: Element, { delay = 0, still = false } = {}) {
   if (reducedMotion || still) return { duration: 0 };
+  const { dx, dy } = fromDeck(node);
   return {
     delay,
-    duration,
+    duration: DEAL_DURATION,
     easing: cubicOut,
     css: (t: number, u: number) =>
-      `transform: translate(0, ${u * -110}px) rotate(${u * -8}deg) scale(${1 - u * 0.15}); opacity: ${Math.min(1, t * 4)};`,
+      `transform: translate(${u * dx}px, ${u * dy}px) rotate(${u * -12}deg) scale(${1 + Math.sin(t * Math.PI) * 0.08}); opacity: ${Math.min(1, t * 4)};`,
+  };
+}
+
+/**
+ * A card turning face up as it lands: it starts showing its back, then flips over. A card that is
+ * already on the table (`still`) simply turns over, and quickly.
+ */
+export function flip(node: Element, { delay = 0, still = false } = {}) {
+  if (reducedMotion) return { duration: 0 };
+  return {
+    delay,
+    duration: still ? 450 : DEAL_DURATION,
+    css: (t: number) => {
+      // Face down for the first half of the flight, then a quick turn over.
+      const turn = still ? t : Math.min(1, Math.max(0, (t - 0.45) / 0.5));
+      const eased = 1 - (1 - turn) ** 3;
+      return `transform: perspective(700px) rotateY(${(1 - eased) * 180}deg);`;
+    },
   };
 }
 
@@ -39,7 +69,7 @@ export function boardDelay(index: number, from: number): number {
 
 /** How long until the last of the board cards from `from` to `to` has landed. */
 export function boardTime(from: number, to: number): number {
-  return to > from ? boardDelay(to - 1, from) + DEAL_MS : 0;
+  return to > from ? boardDelay(to - 1, from) + DEAL_DURATION : 0;
 }
 
 /** The wait before a settled hand's result is shown: for the board to finish, then a beat. */
@@ -51,4 +81,9 @@ export function revealDelay(from: number, to: number, showdown: boolean): number
 /** When a hole card lands: one card round the table, then a second. `order` is the seat's place after the button. */
 export function holeDelay(order: number, round: number): number {
   return reducedMotion ? 0 : (round * SEATS + order) * HOLE_GAP;
+}
+
+/** How long the deal of a new hand takes, until the last hole card has landed. */
+export function dealTime(): number {
+  return reducedMotion ? 0 : holeDelay(SEATS - 1, 1) + DEAL_DURATION;
 }

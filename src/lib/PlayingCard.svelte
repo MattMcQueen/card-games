@@ -2,7 +2,8 @@
   import type { Card } from '../engine';
   import { cardImage } from './cardImages';
   import { isFaceCard, pipsFor } from './cardLayout';
-  import { deal } from './motion';
+  import CardBack from './CardBack.svelte';
+  import { deal, flip } from './motion';
 
   let { card, delay = 0, still = false }: { card: Card; delay?: number; still?: boolean } = $props();
 
@@ -22,7 +23,11 @@
   });
 </script>
 
+<!-- A card flies in face down from the deck and turns over as it lands. `still` skips the flight: a card already
+     on the table that is being turned over, such as an opponent's at a showdown. -->
 <div class="card" role="img" aria-label="{card.rank} of {names[card.suit]}" in:deal|global={{ delay, still }}>
+<div class="flipper" in:flip|global={{ delay, still }}>
+<div class="face-up">
 {#if src}
   <img bind:this={image} {src} alt="" draggable="false" class:ready onload={() => (ready = true)} />
 {/if}
@@ -64,6 +69,9 @@
   {/if}
 </svg>
 </div>
+<div class="face-down"><CardBack /></div>
+</div>
+</div>
 
 <style>
   .card {
@@ -72,6 +80,20 @@
     height: var(--ch);
     flex: none;
     filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
+  }
+  .flipper {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+  }
+  .face-up,
+  .face-down {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+  }
+  .face-down {
+    transform: rotateY(180deg);
   }
   img,
   .fallback {

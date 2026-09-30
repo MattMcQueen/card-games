@@ -1,6 +1,6 @@
 <script lang="ts">
   import { SEATS, type GameState, type Seat } from '../engine';
-  import CardBack from './CardBack.svelte';
+  import HiddenCard from './HiddenCard.svelte';
   import { lastLabel } from './labels';
   import { holeDelay } from './motion';
   import PlayingCard from './PlayingCard.svelte';
@@ -53,7 +53,7 @@
           {#if showCards}
             <PlayingCard {card} delay={holeDelay(order, i)} still={!you} />
           {:else}
-            <CardBack delay={holeDelay(order, i)} />
+            <HiddenCard delay={holeDelay(order, i)} />
           {/if}
         </div>
       {/each}
@@ -90,7 +90,7 @@
     min-height: var(--ch);
   }
   .card {
-    transition: opacity 0.3s, filter 0.3s;
+    transition: filter 0.3s;
   }
   .card:not(:first-child) {
     margin-left: calc(var(--cw) * -0.14);
@@ -104,8 +104,8 @@
   }
   .card.dim,
   .folded .card {
-    opacity: 0.45;
-    filter: grayscale(0.6);
+    /* Darkened rather than faded, so the card stays solid and nothing shows through it. */
+    filter: brightness(0.55) grayscale(0.5);
   }
   .plate {
     display: grid;

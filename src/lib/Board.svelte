@@ -43,10 +43,10 @@
     border-radius: 6px;
   }
   .card {
-    transition: opacity 0.3s, filter 0.3s;
+    transition: filter 0.3s;
   }
   .card.dim {
-    opacity: 0.45;
-    filter: grayscale(0.6);
+    /* Darkened rather than faded, so the card stays solid and nothing shows through it. */
+    filter: brightness(0.55) grayscale(0.5);
   }
 </style>

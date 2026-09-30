@@ -2,6 +2,7 @@
   import { potSize, type GameState } from '../engine';
   import Board from './Board.svelte';
   import ChipStack from './ChipStack.svelte';
+  import Deck from './Deck.svelte';
   import SeatView from './SeatView.svelte';
   import Verdict from './Verdict.svelte';
 
@@ -36,6 +37,7 @@
 <!-- The table: a walnut rail around green felt, with you at the bottom and the others round it. -->
 <div class="rail">
   <div class="felt">
+    <div class="deck-spot"><Deck /></div>
     <p class="info">Hand {game.hand} · Blinds 5/10</p>
 
     <div class="middle">
@@ -106,6 +108,14 @@
     color: color-mix(in srgb, var(--gold) 55%, transparent);
   }
 
+  /* The deck in the top right corner, where every card is dealt from. */
+  .deck-spot {
+    position: absolute;
+    top: 0.8rem;
+    right: 1rem;
+    --cw: clamp(1.9rem, 5.3cqw, 3.3rem);
+    --ch: calc(var(--cw) * 1.455);
+  }
   .middle {
     position: absolute;
     left: 50%;
@@ -221,6 +231,11 @@
     }
     .middle {
       top: 46%;
+    }
+    .deck-spot {
+      top: 0.6rem;
+      right: 0.6rem;
+      --cw: clamp(1.7rem, 8.5cqw, 2.6rem);
     }
   }
 </style>

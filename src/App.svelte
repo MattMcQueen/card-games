@@ -18,7 +18,7 @@
   import HowToPlay from './lib/HowToPlay.svelte';
   import { entryText } from './lib/labels';
   import { shortcutFor } from './lib/keys';
-  import { boardTime, reducedMotion, revealDelay } from './lib/motion';
+  import { boardTime, dealTime, reducedMotion, revealDelay } from './lib/motion';
   import { nav } from './lib/router.svelte';
   import SiteHeader from './lib/SiteHeader.svelte';
   import { playCues, unlockAudio } from './lib/sound.svelte';
@@ -37,7 +37,7 @@
 
   // Not reactive: read when the timers below are set.
   let revealWait = 0;
-  let boardBusyUntil = 0;
+  let animatingUntil = 0;
 
   const legal = $derived(legalActions(game));
   const yourTurn = $derived(game.phase === 'action' && game.toAct === HUMAN_SEAT);
@@ -52,7 +52,9 @@
     playCues(cuesFor(game, next));
     const newHand = next.hand !== game.hand;
     const from = newHand ? 0 : game.board.length;
-    if (next.board.length > from) boardBusyUntil = performance.now() + boardTime(from, next.board.length);
+    // The computer players wait for the cards to land before they act.
+    if (newHand) animatingUntil = performance.now() + dealTime();
+    else if (next.board.length > from) animatingUntil = performance.now() + boardTime(from, next.board.length);
     if (next.phase === 'settled') revealWait = revealDelay(from, next.board.length, next.showdown);
     boardFrom = from;
     wanted = null;
@@ -76,7 +78,7 @@
     if (!seat || seat.human) return;
     const watching = !game.seats[HUMAN_SEAT]?.folded;
     const think = watching ? 650 + Math.random() * 650 : 200;
-    const wait = reducedMotion ? 250 : think + Math.max(0, boardBusyUntil - performance.now());
+    const wait = reducedMotion ? 250 : think + Math.max(0, animatingUntil - performance.now());
     const id = setTimeout(() => update(act(game, decide(game))), wait);
     return () => clearTimeout(id);
   });
