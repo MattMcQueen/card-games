@@ -2,6 +2,7 @@ import { BIG_BLIND, SEATS } from './constants';
 import { createDeck, secureRandomInt, type RandomInt } from './deck';
 import { evaluate, rankValue } from './evaluate';
 import { legalActions, potSize } from './game';
+import { mulberry32 } from './random';
 import type { Action, Card, GameState, LegalActions, Seat } from './types';
 
 /** How a computer player plays. The five seats each have their own, so the table is not all alike. */
@@ -29,18 +30,6 @@ const PERSONAS: readonly Persona[] = [
 
 /** How good a seat's place is: the button acts last after the flop, so it can play more hands. */
 const POSITION_VALUE = [1, 0.35, 0.45, 0, 0.3, 0.65]; // by seats after the button: button, small blind, big blind, then the rest
-
-/** A fast seeded generator (mulberry32) returning numbers in [0, 1). */
-function fastRandom(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 const roundTo5 = (n: number) => Math.round(n / 5) * 5;
 
@@ -140,64 +129,77 @@ function preflopRaises(state: GameState): number {
   return raises;
 }
 
-function preflop(sit: Situation): Action {
-  const { state, seat, legal, persona, random, stack } = sit;
-  // A weak player misjudges its hand by a point or two, and pays less attention to where it sits.
-  const score = chenScore(seat.hole[0] as Card, seat.hole[1] as Card) + (random() - 0.5) * (1 - persona.skill) * 6;
-  const position = (POSITION_VALUE[(seat.id - state.button + SEATS) % SEATS] ?? 0) * (0.4 + 0.6 * persona.skill);
-  const raises = preflopRaises(state);
-  const stackInBlinds = stack / BIG_BLIND;
-  const shove = sizedRaise(sit, legal.maxRaiseTo);
+/** With a short stack the choice is simply to go all-in or give up, with anything decent. */
+function shortStackPreflop(sit: Situation, score: number, position: number, raises: number): Action {
+  const { legal, persona } = sit;
+  if (legal.canCheck && score < 8) return CHECK;
+  const push = score >= 7 - position * 2 - persona.looseness || (raises === 0 && score >= 5);
+  if (push) return sizedRaise(sit, legal.maxRaiseTo);
+  return legal.canCheck ? CHECK : FOLD;
+}
 
-  // Short stacks just go all-in with anything decent or fold.
-  if (stackInBlinds <= 10) {
-    if (legal.canCheck && score < 8) return CHECK;
-    return score >= 7 - position * 2 - persona.looseness || (raises === 0 && score >= 5) ? shove : legal.canCheck ? CHECK : FOLD;
+/** Nobody has raised yet: open the betting with a good enough hand, or perhaps limp in behind. */
+function unopenedPreflop(sit: Situation, score: number, position: number): Action {
+  const { state, legal, persona, random } = sit;
+  const limpers = state.log.filter((e) => e.street === 'preflop' && e.kind === 'call').length;
+  const open = 8.5 - 3 * position - persona.looseness;
+  const size = BIG_BLIND * (2.5 + random()) + limpers * BIG_BLIND;
+  if (score >= open) {
+    // Sometimes a medium hand just limps in behind, depending on the player.
+    const limp = score < open + 2.5 && random() > 0.35 + persona.aggression * 0.5;
+    if (limp) return legal.canCheck ? CHECK : CALL;
+    return sizedRaise(sit, size);
   }
+  if (legal.canCheck) return CHECK;
+  const marginal = score >= open - 2.5 && (persona.looseness > 0 || random() < 0.25);
+  return marginal ? CALL : FOLD;
+}
 
-  if (raises === 0) {
-    const limpers = state.log.filter((e) => e.street === 'preflop' && e.kind === 'call').length;
-    const open = 8.5 - 3 * position - persona.looseness;
-    const size = BIG_BLIND * (2.5 + random()) + limpers * BIG_BLIND;
-    if (score >= open) {
-      // Sometimes a medium hand just limps in behind, depending on the player.
-      const limp = score < open + 2.5 && random() > 0.35 + persona.aggression * 0.5;
-      if (limp) return legal.canCheck ? CHECK : CALL;
-      return sizedRaise(sit, size);
-    }
-    if (legal.canCheck) return CHECK;
-    const marginal = score >= open - 2.5 && (persona.looseness > 0 || random() < 0.25);
-    return marginal ? CALL : FOLD;
-  }
+/** How good a hand must be to call a raise, and to raise again, by how many times the betting has been raised. */
+function raiseThresholds(raises: number, position: number, looseness: number): { call: number; reraise: number } {
+  return {
+    call: [8 - position * 1.5 - looseness * 0.7, 11 - looseness * 0.5, 14][raises - 1] ?? 14,
+    reraise: [11.5 - looseness * 0.5, 15, 16][raises - 1] ?? 16,
+  };
+}
 
-  // Facing a raise: the more it costs, and the more it has been raised, the better a hand must be.
+/** Facing a raise: the more it costs, and the more it has been raised, the better a hand must be. */
+function facingRaisePreflop(sit: Situation, score: number, position: number, raises: number): Action {
+  const { state, seat, legal, persona, random } = sit;
   const pressure = Math.min(1, legal.toCall / Math.max(1, seat.chips));
-  const call = [8 - position * 1.5 - persona.looseness * 0.7, 11 - persona.looseness * 0.5, 14][raises - 1] ?? 14;
-  const reraise = [11.5 - persona.looseness * 0.5, 15, 16][raises - 1] ?? 16;
+  const { call, reraise } = raiseThresholds(raises, position, persona.looseness);
   const bluff = raises === 1 && score >= 6 && random() < persona.bluff * 0.5;
   if ((score >= reraise || bluff) && legal.canRaise) return sizedRaise(sit, state.currentBet * (2.7 + random() * 0.6));
   if (score >= call + 9 * pressure) return legal.canCall ? CALL : CHECK;
   return legal.canCheck ? CHECK : FOLD;
 }
 
-function postflop(sit: Situation): Action {
-  const { state, seat, legal, persona, random, pot, opponents } = sit;
-  // A weak player sizes up its hand with less care: fewer deals of the rest of the hand, so a rougher answer.
-  const trials = Math.round(40 + ((opponents > 2 ? 300 : 400) - 40) * persona.skill ** 2);
-  const equity = estimateEquity(seat.hole, state.board, opponents, trials, random);
-  const facing = legal.toCall > 0;
+function preflop(sit: Situation): Action {
+  const { state, seat, persona, random, stack } = sit;
+  // A weak player misjudges its hand by a point or two, and pays less attention to where it sits.
+  const score = chenScore(seat.hole[0] as Card, seat.hole[1] as Card) + (random() - 0.5) * (1 - persona.skill) * 6;
+  const position = (POSITION_VALUE[(seat.id - state.button + SEATS) % SEATS] ?? 0) * (0.4 + 0.6 * persona.skill);
+  const raises = preflopRaises(state);
+  if (stack / BIG_BLIND <= 10) return shortStackPreflop(sit, score, position, raises);
+  return raises === 0 ? unopenedPreflop(sit, score, position) : facingRaisePreflop(sit, score, position, raises);
+}
 
-  if (!facing) {
-    const heads = opponents === 1;
-    const value = equity >= 0.68 && random() < 0.55 + persona.aggression * 0.4;
-    const medium = equity >= 0.5 && equity < 0.68 && random() < 0.15 + persona.aggression * 0.5;
-    const bluff = equity < 0.5 && random() < persona.bluff * (heads ? 1.5 : 0.5);
-    if (value) return sizedRaise(sit, seat.bet + pot * (0.5 + random() * 0.3));
-    if (medium) return sizedRaise(sit, seat.bet + pot * (0.33 + random() * 0.17));
-    if (bluff) return sizedRaise(sit, seat.bet + pot * 0.5);
-    return CHECK;
-  }
+/** Nobody has bet: bet a good hand for value, a medium one small, and sometimes a weak one as a bluff. */
+function checkedToPostflop(sit: Situation, equity: number): Action {
+  const { seat, persona, random, pot, opponents } = sit;
+  const heads = opponents === 1;
+  const value = equity >= 0.68 && random() < 0.55 + persona.aggression * 0.4;
+  const medium = equity >= 0.5 && equity < 0.68 && random() < 0.15 + persona.aggression * 0.5;
+  const bluff = equity < 0.5 && random() < persona.bluff * (heads ? 1.5 : 0.5);
+  if (value) return sizedRaise(sit, seat.bet + pot * (0.5 + random() * 0.3));
+  if (medium) return sizedRaise(sit, seat.bet + pot * (0.33 + random() * 0.17));
+  if (bluff) return sizedRaise(sit, seat.bet + pot * 0.5);
+  return CHECK;
+}
 
+/** Facing a bet: raise with a strong hand (or as a bluff), otherwise call only if the odds are good enough. */
+function facingBetPostflop(sit: Situation, equity: number): Action {
+  const { state, legal, persona, random, pot, opponents } = sit;
   // A player who bets usually has a better hand than a random one, so shade the odds against big bets.
   // (A weak player takes less notice of what a bet says about the hand.)
   const strength = equity - Math.min(0.2, (0.22 * legal.toCall) / pot) * (0.3 + 0.7 * persona.skill);
@@ -209,6 +211,14 @@ function postflop(sit: Situation): Action {
     return sizedRaise(sit, state.currentBet + pot * 0.75);
   }
   return strength >= potOdds + 0.03 - persona.looseness * 0.01 ? CALL : FOLD;
+}
+
+function postflop(sit: Situation): Action {
+  const { state, seat, persona, random, opponents } = sit;
+  // A weak player sizes up its hand with less care: fewer deals of the rest of the hand, so a rougher answer.
+  const trials = Math.round(40 + ((opponents > 2 ? 300 : 400) - 40) * persona.skill ** 2);
+  const equity = estimateEquity(seat.hole, state.board, opponents, trials, random);
+  return sit.legal.toCall > 0 ? facingBetPostflop(sit, equity) : checkedToPostflop(sit, equity);
 }
 
 /**
@@ -226,7 +236,6 @@ function withMistakes(action: Action, { legal, persona, random, stack }: Situati
 function legalize(action: Action, legal: LegalActions): Action {
   switch (action.type) {
     case 'fold':
-      return legal.canCheck ? CHECK : FOLD;
     case 'check':
       return legal.canCheck ? CHECK : FOLD;
     case 'call':
@@ -249,7 +258,7 @@ export function decide(state: GameState, randomInt: RandomInt = secureRandomInt)
     seat,
     legal,
     persona: PERSONAS[(seat.id - 1 + PERSONAS.length) % PERSONAS.length] as Persona,
-    random: fastRandom(randomInt(0x100000000)),
+    random: mulberry32(randomInt(0x100000000)),
     pot: potSize(state),
     opponents: state.seats.filter((s) => s.id !== seat.id && !s.folded).length,
     stack: seat.bet + seat.chips,

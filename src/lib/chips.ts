@@ -1,4 +1,4 @@
-export const DENOMINATIONS = [500, 100, 25, 5, 1] as const;
+const DENOMINATIONS = [500, 100, 25, 5, 1] as const;
 export type Denomination = (typeof DENOMINATIONS)[number];
 
 /**

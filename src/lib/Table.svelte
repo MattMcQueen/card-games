@@ -5,6 +5,7 @@
   import Deck from './Deck.svelte';
   import SeatView from './SeatView.svelte';
   import Verdict from './Verdict.svelte';
+  import { winningCards } from './verdict';
 
   let {
     game,
@@ -23,15 +24,7 @@
   const inPlay = $derived(!settled || settling);
 
   // At a showdown, the cards that make the winning hands stand out and the rest fade.
-  const faded = $derived.by(() => {
-    if (!revealed || !game.showdown) return null;
-    const winners = new Set(game.pots.filter((p) => !p.uncalled).flatMap((p) => p.winners));
-    const keep = new Set<string>();
-    for (const id of winners) {
-      for (const c of game.results[id]?.rank?.best ?? []) keep.add(c.rank + c.suit);
-    }
-    return keep;
-  });
+  const faded = $derived(winningCards(game, revealed));
 </script>
 
 <!-- The table: a walnut rail around green felt, with you at the bottom and the others round it. -->

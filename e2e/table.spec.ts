@@ -158,50 +158,58 @@ test.describe('layout', () => {
     { name: 'desktop', width: 1920, height: 1080 },
   ];
 
-  /** Every pair of things on the felt that overlap, and anything cut off by its edge. */
-  async function problems(page: Page): Promise<string[]> {
+  interface Box { name: string; group: string; l: number; t: number; r: number; b: number }
+  interface Measurements { boxes: Box[]; felt: Omit<Box, 'name' | 'group'>; scrollsSideways: boolean }
+
+  /** Where everything on the felt is. Things in the same group (a seat and its own cards) may touch. */
+  async function measure(page: Page): Promise<Measurements> {
     return page.evaluate(() => {
-      interface Box { name: string; group: string; l: number; t: number; r: number; b: number }
       const boxes: Box[] = [];
       const add = (name: string, group: string, el: Element | null) => {
         if (!el) return;
         const r = el.getBoundingClientRect();
-        if (r.width === 0 || r.height === 0) return;
-        boxes.push({ name, group, l: r.left, t: r.top, r: r.right, b: r.bottom });
+        if (r.width > 0 && r.height > 0) boxes.push({ name, group, l: r.left, t: r.top, r: r.right, b: r.bottom });
       };
+      const seatOf = (el: Element) => [...(el.closest('.slot') as Element).classList].find((c) => /^s\d$/.test(c)) as string;
       document.querySelectorAll('.felt > .slot').forEach((slot) => {
-        const id = [...slot.classList].find((c) => /^s\d$/.test(c)) as string;
+        const id = seatOf(slot.firstElementChild as Element);
         add(`plate ${id}`, id, slot.querySelector('.plate'));
         slot.querySelectorAll('.hole > .card').forEach((c, i) => add(`card ${id}.${i}`, id, c));
         add(`hand name ${id}`, id, slot.querySelector('.hand-name'));
-      });
-      document.querySelectorAll('.bet').forEach((bet) => {
-        const id = [...(bet.closest('.slot') as Element).classList].find((c) => /^s\d$/.test(c)) as string;
-        add(`bet ${id}`, `bet ${id}`, bet);
+        add(`bet ${id}`, `bet ${id}`, slot.querySelector('.bet'));
       });
       add('verdict', 'verdict', document.querySelector('.verdict'));
       add('deck', 'deck', document.querySelector('#deck'));
       add('pot', 'pot', document.querySelector('.pot > strong'));
       add('board', 'board', document.querySelector('.board'));
-
-      const felt = (document.querySelector('.felt') as Element).getBoundingClientRect();
-      const found: string[] = [];
-      for (const [i, a] of boxes.entries()) {
-        if (a.l < felt.left - 1 || a.r > felt.right + 1 || a.t < felt.top - 1 || a.b > felt.bottom + 1) {
-          found.push(`${a.name} is cut off by the edge of the table`);
-        }
-        for (const b of boxes.slice(i + 1)) {
-          if (a.group === b.group) continue;
-          const w = Math.min(a.r, b.r) - Math.max(a.l, b.l);
-          const h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
-          if (w > 3 && h > 3) found.push(`${a.name} overlaps ${b.name} by ${Math.round(w)} x ${Math.round(h)}`);
-        }
-      }
+      const f = (document.querySelector('.felt') as Element).getBoundingClientRect();
       const page = document.documentElement;
-      if (page.scrollWidth > page.clientWidth) found.push('the page scrolls sideways');
-      return found;
+      return {
+        boxes,
+        felt: { l: f.left, t: f.top, r: f.right, b: f.bottom },
+        scrollsSideways: page.scrollWidth > page.clientWidth,
+      };
     });
   }
+
+  const cutOff = (a: Box, felt: Measurements['felt']) => a.l < felt.l - 1 || a.r > felt.r + 1 || a.t < felt.t - 1 || a.b > felt.b + 1;
+  /** How far, in pixels across and down, two boxes overlap; nothing (0) if they do not, or only touch. */
+  const overlap = (a: Box, b: Box) => [Math.min(a.r, b.r) - Math.max(a.l, b.l), Math.min(a.b, b.b) - Math.max(a.t, b.t)] as const;
+
+  /** Every pair of things on the felt that overlap, and anything cut off by its edge. */
+  function problemsIn({ boxes, felt, scrollsSideways }: Measurements): string[] {
+    const found = scrollsSideways ? ['the page scrolls sideways'] : [];
+    for (const [i, a] of boxes.entries()) {
+      if (cutOff(a, felt)) found.push(`${a.name} is cut off by the edge of the table`);
+      for (const b of boxes.slice(i + 1).filter((other) => other.group !== a.group)) {
+        const [w, h] = overlap(a, b);
+        if (w > 3 && h > 3) found.push(`${a.name} overlaps ${b.name} by ${Math.round(w)} x ${Math.round(h)}`);
+      }
+    }
+    return found;
+  }
+
+  const problems = async (page: Page) => problemsIn(await measure(page));
 
   for (const { name, width, height } of sizes) {
     test(`nothing overlaps on a ${name} (${width} x ${height}), during a hand and at the result`, async ({ page }, testInfo) => {

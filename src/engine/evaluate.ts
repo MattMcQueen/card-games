@@ -47,8 +47,15 @@ function topRanks(counts: readonly number[], exclude: readonly number[], n: numb
   return found;
 }
 
-/** The value of the best five-card hand in 5 to 7 cards. */
-export function evaluate(cards: readonly Card[]): number {
+/** How many of each rank, and which ranks each suit has, as bits (bit v for value v; an ace also sets bit 1). */
+interface Tally {
+  readonly counts: readonly number[];
+  readonly suitMask: readonly number[];
+  readonly suitCount: readonly number[];
+  readonly allMask: number;
+}
+
+function tally(cards: readonly Card[]): Tally {
   const counts = new Array<number>(15).fill(0);
   const suitMask = [0, 0, 0, 0];
   const suitCount = [0, 0, 0, 0];
@@ -65,43 +72,61 @@ export function evaluate(cards: readonly Card[]): number {
     allMask |= 2; // an ace also plays low, in the wheel (A-2-3-4-5)
     for (let s = 0; s < 4; s++) if ((suitMask[s] as number) & (1 << 14)) suitMask[s] = (suitMask[s] as number) | 2;
   }
+  return { counts, suitMask, suitCount, allMask };
+}
 
-  let flush: number[] | null = null;
-  for (let s = 0; s < 4; s++) {
-    if ((suitCount[s] as number) < 5) continue;
-    const mask = suitMask[s] as number;
-    const high = straightHigh(mask);
-    if (high) return pack(8, [high]);
-    const ranks: number[] = [];
-    for (let v = 14; v >= 2 && ranks.length < 5; v--) if (mask & (1 << v)) ranks.push(v);
-    flush = ranks;
-  }
+/** The suit with five or more cards (only one suit can have that many among seven cards), as its mask of ranks. */
+function flushMask({ suitMask, suitCount }: Tally): number {
+  const suit = suitCount.findIndex((n) => n >= 5);
+  return suit < 0 ? 0 : (suitMask[suit] as number);
+}
 
-  const quads: number[] = [];
-  const trips: number[] = [];
-  const pairs: number[] = [];
+/** The five highest ranks in a mask. */
+function highestFive(mask: number): number[] {
+  const ranks: number[] = [];
+  for (let v = 14; v >= 2 && ranks.length < 5; v--) if (mask & (1 << v)) ranks.push(v);
+  return ranks;
+}
+
+/** The ranks that appear four times, three times and twice, each highest first. */
+function groupsOf(counts: readonly number[]): { quads: number[]; trips: number[]; pairs: number[] } {
+  const groups = { quads: [] as number[], trips: [] as number[], pairs: [] as number[] };
   for (let v = 14; v >= 2; v--) {
     const n = counts[v] as number;
-    if (n === 4) quads.push(v);
-    else if (n === 3) trips.push(v);
-    else if (n === 2) pairs.push(v);
+    if (n === 4) groups.quads.push(v);
+    else if (n === 3) groups.trips.push(v);
+    else if (n === 2) groups.pairs.push(v);
   }
+  return groups;
+}
 
-  const [quad] = quads;
-  if (quad) return pack(7, [quad, ...topRanks(counts, [quad], 1)]);
+/** The hands made only of matching ranks: three of a kind, two pair, a pair, or a high card. */
+function matchedScore(counts: readonly number[], trips: readonly number[], pairs: readonly number[]): number {
   const [trip] = trips;
-  if (trip && (trips.length > 1 || pairs.length > 0)) {
-    // A second set of three plays as the pair.
-    return pack(6, [trip, Math.max(trips[1] ?? 0, pairs[0] ?? 0)]);
-  }
-  if (flush) return pack(5, flush);
-  const straight = straightHigh(allMask);
-  if (straight) return pack(4, [straight]);
   if (trip) return pack(3, [trip, ...topRanks(counts, [trip], 2)]);
   const [high, low] = pairs;
   if (high && low) return pack(2, [high, low, ...topRanks(counts, [high, low], 1)]);
   if (high) return pack(1, [high, ...topRanks(counts, [high], 3)]);
   return pack(0, topRanks(counts, [], 5));
+}
+
+/** The value of the best five-card hand in 5 to 7 cards. */
+export function evaluate(cards: readonly Card[]): number {
+  const t = tally(cards);
+  const flush = flushMask(t);
+  const straightFlush = flush ? straightHigh(flush) : 0;
+  if (straightFlush) return pack(8, [straightFlush]);
+
+  const { quads, trips, pairs } = groupsOf(t.counts);
+  const [quad] = quads;
+  if (quad) return pack(7, [quad, ...topRanks(t.counts, [quad], 1)]);
+  const [trip] = trips;
+  // A second set of three plays as the pair in a full house.
+  if (trip && (trips.length > 1 || pairs.length > 0)) return pack(6, [trip, Math.max(trips[1] ?? 0, pairs[0] ?? 0)]);
+  if (flush) return pack(5, highestFive(flush));
+  const straight = straightHigh(t.allMask);
+  if (straight) return pack(4, [straight]);
+  return matchedScore(t.counts, trips, pairs);
 }
 
 const SINGULAR: Record<number, string> = {
@@ -113,34 +138,25 @@ const PLURAL: Record<number, string> = {
   11: 'Jacks', 12: 'Queens', 13: 'Kings', 14: 'Aces',
 };
 
-export function categoryOf(score: number): HandCategory {
+function categoryOf(score: number): HandCategory {
   return CATEGORIES[score >> 20] as HandCategory;
 }
 
+const DESCRIPTIONS: Record<HandCategory, (a: number, b: number) => string> = {
+  'straight-flush': (a) => (a === 14 ? 'Royal flush' : `Straight flush, ${SINGULAR[a]} high`),
+  'four-of-a-kind': (a) => `Four of a kind, ${PLURAL[a]}`,
+  'full-house': (a, b) => `Full house, ${PLURAL[a]} full of ${PLURAL[b]}`,
+  flush: (a) => `Flush, ${SINGULAR[a]} high`,
+  straight: (a) => `Straight, ${SINGULAR[a]} high`,
+  'three-of-a-kind': (a) => `Three of a kind, ${PLURAL[a]}`,
+  'two-pair': (a, b) => `Two pair, ${PLURAL[a]} and ${PLURAL[b]}`,
+  pair: (a) => `Pair of ${PLURAL[a]}`,
+  'high-card': (a) => `${SINGULAR[a]} high`,
+};
+
 /** "Two pair, Kings and Fours", "Flush, Ace high", "Royal flush". */
-export function describeScore(score: number): string {
-  const a = (score >> 16) & 15;
-  const b = (score >> 12) & 15;
-  switch (categoryOf(score)) {
-    case 'straight-flush':
-      return a === 14 ? 'Royal flush' : `Straight flush, ${SINGULAR[a]} high`;
-    case 'four-of-a-kind':
-      return `Four of a kind, ${PLURAL[a]}`;
-    case 'full-house':
-      return `Full house, ${PLURAL[a]} full of ${PLURAL[b]}`;
-    case 'flush':
-      return `Flush, ${SINGULAR[a]} high`;
-    case 'straight':
-      return `Straight, ${SINGULAR[a]} high`;
-    case 'three-of-a-kind':
-      return `Three of a kind, ${PLURAL[a]}`;
-    case 'two-pair':
-      return `Two pair, ${PLURAL[a]} and ${PLURAL[b]}`;
-    case 'pair':
-      return `Pair of ${PLURAL[a]}`;
-    default:
-      return `${SINGULAR[a]} high`;
-  }
+function describeScore(score: number): string {
+  return DESCRIPTIONS[categoryOf(score)]((score >> 16) & 15, (score >> 12) & 15);
 }
 
 /** Every way of choosing five of the cards. */

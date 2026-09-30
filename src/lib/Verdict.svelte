@@ -1,22 +1,10 @@
 <script lang="ts">
-  import { HUMAN_SEAT, type GameState } from '../engine';
+  import type { GameState } from '../engine';
+  import { bannerFor } from './verdict';
 
   let { game, revealed }: { game: GameState; revealed: boolean } = $props();
 
-  // Who took the pots: "You win 240", "Terry wins 120", or one clause each when several seats won.
-  const banner = $derived.by(() => {
-    if (!revealed) return null;
-    const wins = game.log.filter((e) => e.kind === 'win');
-    if (wins.length === 0) return null;
-    const main = wins
-      .map((w) => `${game.seats[w.seat]?.name} ${w.seat === HUMAN_SEAT ? 'win' : 'wins'} ${w.amount}`)
-      .join(' · ');
-    return {
-      tone: wins.some((w) => w.seat === HUMAN_SEAT) ? 'win' : 'lose',
-      main,
-      sub: game.showdown ? (game.results[wins[0]?.seat ?? 0]?.rank?.name ?? '') : 'Everyone else folded',
-    };
-  });
+  const banner = $derived(bannerFor(game, revealed));
 </script>
 
 <div class="verdict-slot">

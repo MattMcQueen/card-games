@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { BIG_BLIND, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
-import { act, isGameOver, legalActions, newGame, nextHand, potSize } from './game';
+import type { RandomInt } from './deck';
+import { act, isBotTurn, isGameOver, legalActions, newGame, nextHand, potSize } from './game';
+import type { Action, GameState } from './types';
 import { chipsInPlay, gameWithButton, play, rig, seededRandomInt, withChips } from './testing';
 
 // Seat 0 has the button, so seat 1 is the small blind, seat 2 the big blind and seat 3 acts first.
@@ -227,6 +229,17 @@ describe('all-in and side pots', () => {
   });
 });
 
+describe('whose turn it is', () => {
+  it('knows when a computer player is to act', () => {
+    const g = start(); // seat 3 acts first
+    expect(isBotTurn(g)).toBe(true);
+    const yours = play(g, 'fold', 'fold', 'fold');
+    expect(yours.toAct).toBe(0);
+    expect(isBotTurn(yours)).toBe(false);
+    expect(isBotTurn(play(start(), 'fold', 'fold', 'fold', 'fold', 'fold'))).toBe(false); // the hand is over
+  });
+});
+
 describe('the game', () => {
   it('starts every seat with the starting stack', () => {
     const g = newGame(seededRandomInt(3));
@@ -256,6 +269,21 @@ describe('the game', () => {
   });
 });
 
+/** A random legal move: mostly checks and calls, sometimes folds, and now and then a raise (sometimes all-in). */
+function randomMove(g: GameState, random: RandomInt): Action {
+  const legal = legalActions(g);
+  const roll = random(10);
+  if (legal.canRaise && roll < 3) {
+    const to = roll === 0 ? legal.maxRaiseTo : legal.minRaiseTo + random(legal.maxRaiseTo - legal.minRaiseTo + 1);
+    return { type: 'raise', to };
+  }
+  if (roll < 8) {
+    if (legal.canCheck) return { type: 'check' };
+    if (legal.canCall) return { type: 'call' };
+  }
+  return { type: legal.canCheck ? 'check' : 'fold' };
+}
+
 describe('playing at random', () => {
   it('never loses or makes chips, and every hand finishes', () => {
     const random = seededRandomInt(2024);
@@ -266,14 +294,7 @@ describe('playing at random', () => {
       let moves = 0;
       while (g.phase === 'action') {
         expect(++moves).toBeLessThan(200);
-        const legal = legalActions(g);
-        const roll = random(10);
-        if (legal.canRaise && roll < 3) {
-          const to = roll === 0 ? legal.maxRaiseTo : legal.minRaiseTo + random(legal.maxRaiseTo - legal.minRaiseTo + 1);
-          g = act(g, { type: 'raise', to });
-        } else if (legal.canCheck && roll < 8) g = act(g, { type: 'check' });
-        else if (legal.canCall && roll < 8) g = act(g, { type: 'call' });
-        else g = act(g, { type: legal.canCheck ? 'check' : 'fold' });
+        g = act(g, randomMove(g, random));
         expect(chipsInPlay(g)).toBe(before);
         expect(g.seats.every((s) => s.chips >= 0)).toBe(true);
       }

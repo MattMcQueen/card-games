@@ -1,5 +1,5 @@
 import { cubicOut } from 'svelte/easing';
-import { SEATS } from '../engine';
+import { SEATS, type GameState } from '../engine';
 
 /** Honour the visitor's "reduce motion" setting: no flying cards, no waiting for them. */
 export const reducedMotion =
@@ -92,4 +92,20 @@ export function holeDelay(order: number, round: number): number {
 /** How long the deal of a new hand takes, until the last hole card has landed. */
 export function dealTime(): number {
   return reducedMotion ? 0 : holeDelay(SEATS - 1, 1) + DEAL_DURATION;
+}
+
+/** How long the cards dealt by the change from `prev` to `next` take to land, in milliseconds. */
+export function animationTime(prev: GameState, next: GameState): number {
+  if (next.hand !== prev.hand) return dealTime();
+  return boardTime(prev.board.length, next.board.length);
+}
+
+/**
+ * How long a computer player takes over its move: a beat you can follow while you are still in the
+ * hand (after any cards still landing), and quick once you have folded and are only watching.
+ * `luck` is a number from 0 to 1 that varies it a little.
+ */
+export function thinkTime(youAreIn: boolean, stillLanding: number, luck: number): number {
+  if (reducedMotion) return 250;
+  return (youAreIn ? 650 + luck * 650 : 200) + Math.max(0, stillLanding);
 }

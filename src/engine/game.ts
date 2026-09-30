@@ -78,6 +78,12 @@ export function isGameOver(state: GameState): boolean {
   return state.phase === 'settled' && (state.seats[HUMAN_SEAT]?.chips ?? 0) === 0;
 }
 
+/** It is a computer player to act. */
+export function isBotTurn(state: GameState): boolean {
+  const seat = state.seats[state.toAct];
+  return state.phase === 'action' && !!seat && !seat.human;
+}
+
 /** Everything bet so far in this hand, on every street. */
 export function potSize(state: GameState): number {
   return state.seats.reduce((sum, s) => sum + s.total, 0);
@@ -178,6 +184,21 @@ function needsAction(g: Draft, seat: Seat): boolean {
   return g.seats.filter((s) => !s.folded && !s.allIn).length >= 2;
 }
 
+/** Ends the betting on a street: the bets are gathered in and the next cards are dealt (after a burn card). */
+function dealStreet(g: Draft, street: Street): void {
+  for (const seat of g.seats) {
+    seat.bet = 0;
+    seat.acted = false;
+    if (!seat.folded) seat.last = null;
+  }
+  g.currentBet = 0;
+  g.minRaise = BIG_BLIND;
+  draw(g); // the burn card
+  for (let i = street === 'flop' ? 3 : 1; i > 0; i--) g.board.push(draw(g));
+  g.street = street;
+  g.log.push({ kind: 'board', seat: -1, amount: 0, street });
+}
+
 /** Moves the hand on after `from` has acted: to the next seat with a decision, the next street, or the end. */
 function advance(g: Draft, from: number): void {
   for (;;) {
@@ -189,18 +210,7 @@ function advance(g: Draft, from: number): void {
     }
     const street = NEXT_STREET[g.street];
     if (!street) return settle(g);
-
-    for (const seat of g.seats) {
-      seat.bet = 0;
-      seat.acted = false;
-      if (!seat.folded) seat.last = null;
-    }
-    g.currentBet = 0;
-    g.minRaise = BIG_BLIND;
-    draw(g); // the burn card
-    for (let i = street === 'flop' ? 3 : 1; i > 0; i--) g.board.push(draw(g));
-    g.street = street;
-    g.log.push({ kind: 'board', seat: -1, amount: 0, street });
+    dealStreet(g, street);
     from = g.button;
   }
 }
@@ -224,44 +234,46 @@ export function legalActions(state: GameState): LegalActions {
   };
 }
 
-/** Plays the move of the seat whose turn it is. Throws if it is not allowed. */
-export function act(state: GameState, action: Action): GameState {
-  if (state.phase !== 'action') throw new Error('The hand is over');
-  const legal = legalActions(state);
-  const g = draftOf(state);
-  const seat = g.seats[g.toAct] as MutableSeat;
+/** A bet or a raise to `requested` (or all-in, if that is more than the stack). Throws if it is not allowed. */
+function raise(g: Draft, seat: MutableSeat, requested: number, legal: LegalActions): ActionKind {
+  if (!legal.canRaise) throw new Error('You cannot raise now');
   const opening = g.currentBet === 0;
-  let kind: ActionKind;
+  const to = Math.min(Math.floor(requested), legal.maxRaiseTo);
+  if (to < legal.minRaiseTo) throw new Error(`The smallest raise is to ${legal.minRaiseTo}`);
+  pay(seat, to - seat.bet);
+  seat.acted = true;
+  // A raise short of a full one (only possible all-in) does not change the size of the next raise.
+  if (to - g.currentBet >= g.minRaise) g.minRaise = to - g.currentBet;
+  g.currentBet = to;
+  return seat.allIn ? 'allin' : opening ? 'bet' : 'raise';
+}
 
+/** Makes a move for `seat`, and says what kind of move it turned out to be. Throws if it is not allowed. */
+function makeMove(g: Draft, seat: MutableSeat, action: Action, legal: LegalActions): ActionKind {
   switch (action.type) {
     case 'fold':
       seat.folded = true;
-      kind = 'fold';
-      break;
+      return 'fold';
     case 'check':
       if (!legal.canCheck) throw new Error('You cannot check: there is a bet to match');
       seat.acted = true;
-      kind = 'check';
-      break;
+      return 'check';
     case 'call':
       if (!legal.canCall) throw new Error('There is nothing to call');
       pay(seat, legal.toCall);
       seat.acted = true;
-      kind = seat.allIn ? 'allin' : 'call';
-      break;
-    case 'raise': {
-      if (!legal.canRaise) throw new Error('You cannot raise now');
-      const to = Math.min(Math.floor(action.to), legal.maxRaiseTo);
-      if (to < legal.minRaiseTo) throw new Error(`The smallest raise is to ${legal.minRaiseTo}`);
-      pay(seat, to - seat.bet);
-      seat.acted = true;
-      // A raise short of a full one (only possible all-in) does not change the size of the next raise.
-      if (to - g.currentBet >= g.minRaise) g.minRaise = to - g.currentBet;
-      g.currentBet = to;
-      kind = seat.allIn ? 'allin' : opening ? 'bet' : 'raise';
-      break;
-    }
+      return seat.allIn ? 'allin' : 'call';
+    case 'raise':
+      return raise(g, seat, action.to, legal);
   }
+}
+
+/** Plays the move of the seat whose turn it is. Throws if it is not allowed. */
+export function act(state: GameState, action: Action): GameState {
+  if (state.phase !== 'action') throw new Error('The hand is over');
+  const g = draftOf(state);
+  const seat = g.seats[g.toAct] as MutableSeat;
+  const kind = makeMove(g, seat, action, legalActions(state));
 
   seat.last = { kind, amount: seat.bet };
   g.log.push({ kind, seat: seat.id, amount: seat.bet, street: g.street });

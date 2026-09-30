@@ -1,9 +1,7 @@
 <script lang="ts">
   import { SEATS, type GameState, type Seat } from '../engine';
-  import HiddenCard from './HiddenCard.svelte';
-  import { lastLabel } from './labels';
-  import { holeDelay } from './motion';
-  import PlayingCard from './PlayingCard.svelte';
+  import HoleCards from './HoleCards.svelte';
+  import { seatStatus } from './labels';
 
   let {
     seat,
@@ -34,32 +32,12 @@
   // Winnings appear in the stack only once the hand's result is shown.
   const stack = $derived(settling ? seat.chips - (game.results[seat.id]?.won ?? 0) : seat.chips);
 
-  const status = $derived.by(() => {
-    if (result && result.net > 0) return `+${result.net}`;
-    if (seat.folded) return 'Fold';
-    if (seat.last) return lastLabel(seat.last.kind, seat.last.amount);
-    if (seat.allIn) return 'All-in';
-    if (seat.bet > 0) return `Blind ${seat.bet}`; // a blind: the only bet made without a move
-    return '';
-  });
+  const status = $derived(seatStatus(seat, result));
   const handName = $derived(result?.rank?.name ?? '');
-  const dim = (card: { rank: string; suit: string }) => !!faded && !faded.has(card.rank + card.suit);
 </script>
 
 <div class="seat" class:you class:folded={seat.folded} class:active class:winner class:out={sittingOut}>
-  <div class="hole">
-    {#if dealt}
-      {#each seat.hole as card, i (`${game.hand}-${i}-${showCards}`)}
-        <div class="card" class:dim={showCards && dim(card)} style="--i: {i}">
-          {#if showCards}
-            <PlayingCard {card} delay={holeDelay(order, i)} still={!you} />
-          {:else}
-            <HiddenCard delay={holeDelay(order, i)} />
-          {/if}
-        </div>
-      {/each}
-    {/if}
-  </div>
+  <HoleCards cards={seat.hole} hand={game.hand} {order} showFaces={showCards} ownCards={you} folded={seat.folded} {faded} />
 
   <div class="plate">
     <span class="name">
@@ -84,29 +62,6 @@
     justify-items: center;
     gap: 0.25rem;
     transition: opacity 0.3s;
-  }
-  .hole {
-    display: flex;
-    justify-content: center;
-    min-height: var(--ch);
-  }
-  .card {
-    transition: filter 0.3s;
-  }
-  .card:not(:first-child) {
-    margin-left: calc(var(--cw) * -0.14);
-  }
-  .card:first-child {
-    rotate: -4deg;
-  }
-  .card:nth-child(2) {
-    rotate: 4deg;
-    translate: 0 -0.15rem;
-  }
-  .card.dim,
-  .folded .card {
-    /* Darkened rather than faded, so the card stays solid and nothing shows through it. */
-    filter: brightness(0.55) grayscale(0.5);
   }
   .plate {
     display: grid;

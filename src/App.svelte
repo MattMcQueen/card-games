@@ -3,6 +3,7 @@
     HUMAN_SEAT,
     act,
     decide,
+    isBotTurn,
     isGameOver,
     legalActions,
     newGame,
@@ -16,9 +17,9 @@
   import { cuesFor } from './lib/cues';
   import HandLog from './lib/HandLog.svelte';
   import HowToPlay from './lib/HowToPlay.svelte';
-  import { entryText } from './lib/labels';
-  import { shortcutFor } from './lib/keys';
-  import { boardTime, dealTime, reducedMotion, revealDelay } from './lib/motion';
+  import { announcementFor } from './lib/labels';
+  import { keyMove, keysActive } from './lib/keys';
+  import { animationTime, revealDelay, thinkTime } from './lib/motion';
   import { nav } from './lib/router.svelte';
   import SiteHeader from './lib/SiteHeader.svelte';
   import { playCues, unlockAudio } from './lib/sound.svelte';
@@ -53,8 +54,7 @@
     const newHand = next.hand !== game.hand;
     const from = newHand ? 0 : game.board.length;
     // The computer players wait for the cards to land before they act.
-    if (newHand) animatingUntil = performance.now() + dealTime();
-    else if (next.board.length > from) animatingUntil = performance.now() + boardTime(from, next.board.length);
+    animatingUntil = Math.max(animatingUntil, performance.now() + animationTime(game, next));
     if (next.phase === 'settled') revealWait = revealDelay(from, next.board.length, next.showdown);
     boardFrom = from;
     wanted = null;
@@ -73,12 +73,8 @@
   // The computer players take their turns, a little apart so you can follow what they do. Once you
   // have folded the rest of the hand is played out quickly.
   $effect(() => {
-    if (game.phase !== 'action') return;
-    const seat = game.seats[game.toAct];
-    if (!seat || seat.human) return;
-    const watching = !game.seats[HUMAN_SEAT]?.folded;
-    const think = watching ? 650 + Math.random() * 650 : 200;
-    const wait = reducedMotion ? 250 : think + Math.max(0, animatingUntil - performance.now());
+    if (!isBotTurn(game)) return;
+    const wait = thinkTime(!game.seats[HUMAN_SEAT]?.folded, animatingUntil - performance.now(), Math.random());
     const id = setTimeout(() => update(act(game, decide(game))), wait);
     return () => clearTimeout(id);
   });
@@ -95,27 +91,15 @@
   }
 
   function onkeydown(event: KeyboardEvent) {
-    // Only on the game page, and not while the Support me panel is open: then keys belong to it.
-    if (nav.route !== 'game' || !yourTurn || document.querySelector(':popover-open')) return;
-    const shortcut = shortcutFor(event);
-    if (!shortcut) return;
-    if (shortcut === 'raise' && !legal.canRaise) return;
+    // Not while the Support me panel is open: then keys belong to it.
+    if (!keysActive(nav.route === 'game', yourTurn, !!document.querySelector(':popover-open'))) return;
+    const move = keyMove(event, legal, amount);
+    if (!move) return;
     event.preventDefault();
-    if (shortcut === 'fold') play({ type: 'fold' });
-    else if (shortcut === 'call') call();
-    else if (shortcut === 'raise') raise();
-    else if (legal.canRaise) play({ type: 'raise', to: legal.maxRaiseTo });
-    else if (legal.canCall) call();
+    play(move);
   }
 
-  // What screen readers hear: your prompt when it is your turn, otherwise the latest move.
-  const announcement = $derived.by(() => {
-    if (yourTurn) {
-      return legal.canCall ? `Your turn. ${legal.toCall} to call.` : 'Your turn. You can check or bet.';
-    }
-    const latest = game.log.at(-1);
-    return latest && (game.phase === 'action' || revealed) ? entryText(latest, game) : '';
-  });
+  const announcement = $derived(announcementFor(game, legal, yourTurn, revealed));
 </script>
 
 <svelte:window {onkeydown} onpointerdown={preloadCards} />

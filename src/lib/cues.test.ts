@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { act, nextHand } from '../engine';
 import { gameWithButton, play, rig, seededRandomInt, withChips } from '../engine/testing';
-import { cuesFor } from './cues';
+import type { SeatResult } from '../engine';
+import { cuesFor, outcomeSounds } from './cues';
 
 const sounds = (prev: Parameters<typeof cuesFor>[0], next: Parameters<typeof cuesFor>[1]) =>
   cuesFor(prev, next, true).map((c) => c.sound);
@@ -58,5 +59,31 @@ describe('cuesFor', () => {
     const g = play(start(), 'call', 'call', 'call', 'call', 'call');
     const flop = cuesFor(g, act(g, { type: 'check' }), false).filter((c) => c.sound === 'deal');
     expect(flop.map((c) => c.at)).toEqual([0, 0.26, 0.52]);
+  });
+});
+
+describe('outcomeSounds', () => {
+  const result = (net: number, category?: string): SeatResult => ({
+    seat: 0,
+    won: Math.max(net, 0),
+    net,
+    rank: category ? ({ category, score: 0, name: '', best: [] } as unknown as SeatResult['rank']) : null,
+  });
+
+  it('plays a jingle and a payout for a win, with a fanfare for a big hand', () => {
+    expect(outcomeSounds(result(50))).toEqual([['win', 0], ['payout', 0.25]]);
+    expect(outcomeSounds(result(50, 'pair'))[0]).toEqual(['win', 0]);
+    expect(outcomeSounds(result(50, 'flush'))[0]).toEqual(['bigWin', 0]);
+    expect(outcomeSounds(result(50, 'full-house'))[0]).toEqual(['bigWin', 0]);
+  });
+
+  it('stings only for a lost showdown, and otherwise just sweeps the chips away', () => {
+    expect(outcomeSounds(result(-50, 'pair'))).toEqual([['lose', 0], ['sweep', 0.1]]);
+    expect(outcomeSounds(result(-10))).toEqual([['sweep', 0.1]]);
+  });
+
+  it('plays a quiet payout when you neither won nor lost', () => {
+    expect(outcomeSounds(result(0))).toEqual([['payout', 0]]);
+    expect(outcomeSounds(undefined)).toEqual([['payout', 0]]);
   });
 });
