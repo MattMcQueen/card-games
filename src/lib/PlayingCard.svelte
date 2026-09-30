@@ -3,7 +3,7 @@
   import { cardImage } from './cardImages';
   import { isFaceCard, pipsFor } from './cardLayout';
   import CardBack from './CardBack.svelte';
-  import { deal, flip } from './motion';
+  import { deal, flipDown, flipUp } from './motion';
 
   let { card, delay = 0 }: { card: Card; delay?: number } = $props();
 
@@ -24,8 +24,7 @@
 </script>
 
 <div class="card" role="img" aria-label="{card.rank} of {names[card.suit]}" in:deal|global={{ delay }}>
-<div class="flipper" in:flip|global={{ delay }}>
-<div class="face-up">
+<div class="face-up" in:flipUp|global={{ delay }}>
 {#if src}
   <img bind:this={image} {src} alt="" draggable="false" class:ready onload={() => (ready = true)} />
 {/if}
@@ -67,8 +66,7 @@
   {/if}
 </svg>
 </div>
-<div class="face-down"><CardBack /></div>
-</div>
+<div class="face-down" in:flipDown|global={{ delay }}><CardBack /></div>
 </div>
 
 <style>
@@ -79,19 +77,16 @@
     flex: none;
     filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
   }
-  .flipper {
-    position: absolute;
-    inset: 0;
-    transform-style: preserve-3d;
-  }
+  /* The two faces are stacked. Resting, the front shows and the back is hidden. While a card turns over, each
+     face is swapped in or out at the halfway point by motion.ts, rather than relying on backface-visibility,
+     which WebKit (Safari, and every browser on iPhone) does not apply to a card inside a filter. */
   .face-up,
   .face-down {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden;
   }
   .face-down {
-    transform: rotateY(180deg);
+    opacity: 0;
   }
   img,
   .fallback {
