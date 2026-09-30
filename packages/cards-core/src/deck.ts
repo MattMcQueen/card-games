@@ -1,4 +1,4 @@
-import { RANKS, SUITS, type Card } from './types';
+import { RANKS, SUITS, type Card } from './cards';
 
 /** Returns a uniformly distributed integer in [0, max). */
 export type RandomInt = (max: number) => number;
@@ -16,9 +16,10 @@ export const secureRandomInt: RandomInt = (max) => {
   return (buffer[0] as number) % max;
 };
 
-/** An ordered (unshuffled) 52-card deck. */
-export function createDeck(): Card[] {
-  return SUITS.flatMap((suit) => RANKS.map((rank) => ({ rank, suit })));
+/** An ordered (unshuffled) deck, or a shoe of several 52-card decks one after another. */
+export function createDeck(decks = 1): Card[] {
+  const deck = SUITS.flatMap((suit) => RANKS.map((rank) => ({ rank, suit })));
+  return Array.from({ length: decks }, () => deck).flat();
 }
 
 /** Fisher-Yates shuffle; returns a new array and leaves the input untouched. */

@@ -1,8 +1,7 @@
 import { BIG_BLIND, SEATS } from './constants';
-import { createDeck, secureRandomInt, type RandomInt } from './deck';
+import { createDeck, mulberry32, secureRandomInt, type RandomInt } from '@card-games/cards-core';
 import { evaluate, rankValue } from './evaluate';
 import { legalActions, potSize } from './game';
-import { mulberry32 } from './random';
 import type { Action, Card, GameState, LegalActions, Seat } from './types';
 
 /** How a computer player plays. The five seats each have their own, so the table is not all alike. */

@@ -10,6 +10,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@card-games/cards-core": "*"
+  },
   "devDependencies": {
     "@breezystack/lamejs": "^1.2.7",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

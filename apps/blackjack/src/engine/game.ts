@@ -1,13 +1,13 @@
 import { DECKS, MAX_BET, MAX_HANDS, MIN_BET, RESHUFFLE_AT, STARTING_CHIPS } from './constants';
 import { handValue, isBlackjack, isBust, isPair } from './hand';
-import { createShoe, secureRandomInt, shuffle, type RandomInt } from './shoe';
+import { createDeck, secureRandomInt, shuffle, type RandomInt } from '@card-games/cards-core';
 import type { Action, Card, GameState, HandResult, PlayerHand } from './types';
 
 export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
   return {
     phase: 'betting',
     chips: STARTING_CHIPS,
-    shoe: shuffle(createShoe(DECKS), randomInt),
+    shoe: shuffle(createDeck(DECKS), randomInt),
     shuffled: true,
     hands: [],
     active: 0,
@@ -65,7 +65,7 @@ export function startRound(
   }
 
   const shuffled = state.shoe.length <= RESHUFFLE_AT;
-  let shoe: readonly Card[] = shuffled ? shuffle(createShoe(DECKS), randomInt) : state.shoe;
+  let shoe: readonly Card[] = shuffled ? shuffle(createDeck(DECKS), randomInt) : state.shoe;
   let first: Card, up: Card, second: Card;
   [first, shoe] = draw(shoe);
   [up, shoe] = draw(shoe);

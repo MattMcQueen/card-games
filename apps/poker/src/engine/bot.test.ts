@@ -1,7 +1,8 @@
+import { seededRandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
 import { chenScore, decide, estimateEquity } from './bot';
 import { act, isGameOver, legalActions, newGame, nextHand } from './game';
-import { cards, chipsInPlay, gameWithButton, play, rig, seededRandomInt, withChips } from './testing';
+import { cards, chipsInPlay, gameWithButton, play, rig, withChips } from './testing';
 import { BIG_BLIND } from './constants';
 
 const [a, b] = [(t: string) => cards(t)[0]!, (t: string) => cards(t)[1]!];

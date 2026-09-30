@@ -1,14 +1,7 @@
 import { SEATS } from './constants';
-import { createDeck, type RandomInt } from './deck';
+import { createDeck, seededRandomInt } from '@card-games/cards-core';
 import { act, legalActions, newGame } from './game';
-import { mulberry32 } from './random';
 import type { Card, GameState, Rank, Suit } from './types';
-
-/** A deterministic random integer generator, so tests are repeatable. */
-export function seededRandomInt(seed: number): RandomInt {
-  const next = mulberry32(seed);
-  return (max) => Math.floor(next() * max);
-}
 
 /** Cards from text such as "As Kh 10d 2c": rank then suit letter. */
 export function cards(text: string): Card[] {

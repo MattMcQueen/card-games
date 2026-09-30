@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { createShoe, secureRandomInt, shuffle } from './shoe';
-import { seededRandomInt } from './testing';
-import { RANKS, SUITS } from './types';
+import { RANKS, SUITS } from './cards';
+import { createDeck, secureRandomInt, shuffle } from './deck';
+import { seededRandomInt } from './random';
 
-describe('createShoe', () => {
-  it('holds six full decks', () => {
-    const shoe = createShoe(6);
+describe('createDeck', () => {
+  it('is one of each card', () => {
+    const deck = createDeck();
+    expect(deck).toHaveLength(52);
+    expect(new Set(deck.map((c) => c.rank + c.suit)).size).toBe(52);
+  });
+
+  it('can be a shoe of six full decks', () => {
+    const shoe = createDeck(6);
     expect(shoe).toHaveLength(312);
     for (const rank of RANKS) {
       expect(shoe.filter((c) => c.rank === rank)).toHaveLength(24);
@@ -20,7 +26,7 @@ describe('shuffle', () => {
   const key = (cards: { rank: string; suit: string }[]) => cards.map((c) => c.rank + c.suit);
 
   it('keeps every card and does not change the input', () => {
-    const ordered = createShoe(6);
+    const ordered = createDeck(6);
     const before = key(ordered);
     const shuffled = shuffle(ordered, seededRandomInt(7));
     expect(key(ordered)).toEqual(before);
@@ -28,7 +34,7 @@ describe('shuffle', () => {
   });
 
   it('actually reorders the cards, and differently for different seeds', () => {
-    const ordered = createShoe(6);
+    const ordered = createDeck(6);
     const a = key(shuffle(ordered, seededRandomInt(1)));
     const b = key(shuffle(ordered, seededRandomInt(2)));
     expect(a).not.toEqual(key(ordered));
@@ -36,7 +42,7 @@ describe('shuffle', () => {
   });
 
   it('is repeatable for the same seed', () => {
-    const ordered = createShoe(6);
+    const ordered = createDeck(6);
     expect(shuffle(ordered, seededRandomInt(5))).toEqual(shuffle(ordered, seededRandomInt(5)));
   });
 

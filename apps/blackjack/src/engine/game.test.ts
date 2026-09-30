@@ -1,3 +1,4 @@
+import { seededRandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
 import {
   act,
@@ -11,7 +12,7 @@ import {
   surrenderRefund,
 } from './game';
 import { handValue } from './hand';
-import { rigged, seededRandomInt } from './testing';
+import { rigged } from './testing';
 import type { Action, GameState, Rank } from './types';
 
 const ranks = (state: GameState, hand = 0) => state.hands[hand]?.cards.map((c) => c.rank);

@@ -1,6 +1,7 @@
+import { seededRandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
 import { act, nextHand } from '../engine';
-import { gameWithButton, play, rig, seededRandomInt, withChips } from '../engine/testing';
+import { gameWithButton, play, rig, withChips } from '../engine/testing';
 import type { SeatResult } from '../engine';
 import { cuesFor, outcomeSounds } from './cues';
 

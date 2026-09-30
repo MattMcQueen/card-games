@@ -1,9 +1,9 @@
+import { seededRandomInt, type RandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
 import { BIG_BLIND, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
-import type { RandomInt } from './deck';
 import { act, isBotTurn, isGameOver, legalActions, newGame, nextHand, potSize } from './game';
 import type { Action, GameState } from './types';
-import { chipsInPlay, gameWithButton, play, rig, seededRandomInt, withChips } from './testing';
+import { chipsInPlay, gameWithButton, play, rig, withChips } from './testing';
 
 // Seat 0 has the button, so seat 1 is the small blind, seat 2 the big blind and seat 3 acts first.
 // After the flop the order is 1, 2, 3, 4, 5, 0.

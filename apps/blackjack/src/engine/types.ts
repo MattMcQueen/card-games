@@ -1,13 +1,6 @@
-export const SUITS = ['S', 'H', 'D', 'C'] as const;
-export const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'] as const;
+import type { Card } from '@card-games/cards-core';
 
-export type Suit = (typeof SUITS)[number];
-export type Rank = (typeof RANKS)[number];
-
-export interface Card {
-  readonly rank: Rank;
-  readonly suit: Suit;
-}
+export { RANKS, SUITS, type Card, type Rank, type Suit } from '@card-games/cards-core';
 
 export type Action =
   | 'hit'

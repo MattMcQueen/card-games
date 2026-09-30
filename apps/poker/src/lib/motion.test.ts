@@ -1,6 +1,7 @@
+import { seededRandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
 import { act, nextHand } from '../engine';
-import { gameWithButton, play, seededRandomInt } from '../engine/testing';
+import { gameWithButton, play } from '../engine/testing';
 import { animationTime, boardDelay, boardTime, dealTime, holeDelay, revealDelay, thinkTime } from './motion';
 
 const start = () => gameWithButton(0);

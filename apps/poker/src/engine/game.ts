@@ -1,5 +1,5 @@
+import { createDeck, secureRandomInt, shuffle, type RandomInt } from '@card-games/cards-core';
 import { BIG_BLIND, BOT_NAMES, HUMAN_SEAT, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
-import { createDeck, secureRandomInt, shuffle, type RandomInt } from './deck';
 import { rankHand } from './evaluate';
 import { buildPots } from './pots';
 import type {
