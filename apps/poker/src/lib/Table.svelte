@@ -212,7 +212,7 @@
       /* But no taller than the screen leaves room for, after the header and your turn's buttons, so
          Fold, Call and Raise are in view without scrolling. dvh is the height the browser's toolbars leave. */
       width: 100%; /* so a shorter table stays full width, rather than narrowing to keep its shape */
-      max-height: calc(100dvh - 15.5rem);
+      max-height: max(calc(100dvh - 15.5rem), 26.5rem); /* not so short that the result banner has no room */
       --cw: clamp(2.4rem, 12cqw, 3.8rem);
       --chip: clamp(1.2rem, 6cqw, 1.7rem);
     }
@@ -230,7 +230,7 @@
       --plate-stack: 1rem;
     }
     /* Your seat keeps clear of the bottom edge when a short screen makes the table shorter. */
-    .s0 { --x: 50%; --y: min(85%, calc(100% - 4.6rem)); }
+    .s0 { --x: 50%; --y: min(85%, calc(100% - 4.3rem)); }
     /* On a table made shorter by a short screen, these two move down (by as much as it lost, roughly), to
        stay clear of the board. At full height the first value is the larger, so they are where they were. */
     .s1 { --x: 17%; --y: max(72%, calc(43.3% + 9rem)); }
@@ -251,7 +251,9 @@
       display: none;
     }
     .middle {
-      top: 46%;
+      /* Down a little on a table made shorter by a short screen, so the result banner, which grows upwards,
+         stays clear of the seat at the top. At full height the first value is the larger. */
+      top: max(46%, calc(37.3% + 2.75rem));
     }
     .pot strong {
       padding: 0.1rem 0.5rem;
