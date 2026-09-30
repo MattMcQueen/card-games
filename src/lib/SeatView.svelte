@@ -39,6 +39,7 @@
     if (seat.folded) return 'Fold';
     if (seat.last) return lastLabel(seat.last.kind, seat.last.amount);
     if (seat.allIn) return 'All-in';
+    if (seat.bet > 0) return `Blind ${seat.bet}`; // a blind: the only bet made without a move
     return '';
   });
   const handName = $derived(result?.rank?.name ?? '');
@@ -194,7 +195,7 @@
     left: 50%;
     z-index: 2;
     width: max-content;
-    max-width: 11rem;
+    max-width: 8.5rem;
     margin-top: 0.15rem;
     padding: 0.1rem 0.5rem;
     border-radius: 0.6rem;

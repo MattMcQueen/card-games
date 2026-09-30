@@ -29,10 +29,11 @@
 </div>
 
 <style>
-  /* Takes the place of the pot, above the board (the pot is swept away once the result shows), without taking any room of its own. */
+  /* Takes the place of the pot, just above the board (the pot is swept away once the result shows), without
+     taking any room of its own. It sits on the bottom edge of the pot's place, so a long one grows upwards. */
   .verdict-slot {
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 50%;
     z-index: 3;
     translate: -50% 0;
@@ -61,6 +62,22 @@
   .lose {
     background: var(--lose-bg);
     color: var(--lose-fg);
+  }
+  /* On a narrow table the banner must fit in the gap between the seats on the left and right. */
+  @container (max-width: 600px) {
+    .verdict-slot {
+      max-width: 34cqw;
+    }
+    .verdict {
+      padding: 0.25rem 0.6rem;
+      text-wrap: balance;
+    }
+    .verdict strong {
+      font-size: 1rem;
+    }
+    .verdict span {
+      font-size: 0.7rem;
+    }
   }
   @keyframes pop {
     from {

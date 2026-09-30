@@ -3,7 +3,7 @@
   import { cardImage } from './cardImages';
   import { isFaceCard, pipsFor } from './cardLayout';
   import CardBack from './CardBack.svelte';
-  import { deal, flip } from './motion';
+  import { deal, flipDown, flipUp } from './motion';
 
   let { card, delay = 0, still = false }: { card: Card; delay?: number; still?: boolean } = $props();
 
@@ -26,8 +26,7 @@
 <!-- A card flies in face down from the deck and turns over as it lands. `still` skips the flight: a card already
      on the table that is being turned over, such as an opponent's at a showdown. -->
 <div class="card" role="img" aria-label="{card.rank} of {names[card.suit]}" in:deal|global={{ delay, still }}>
-<div class="flipper" in:flip|global={{ delay, still }}>
-<div class="face-up">
+<div class="face-up" in:flipUp|global={{ delay, still }}>
 {#if src}
   <img bind:this={image} {src} alt="" draggable="false" class:ready onload={() => (ready = true)} />
 {/if}
@@ -69,8 +68,7 @@
   {/if}
 </svg>
 </div>
-<div class="face-down"><CardBack /></div>
-</div>
+<div class="face-down" in:flipDown|global={{ delay, still }}><CardBack /></div>
 </div>
 
 <style>
@@ -81,19 +79,16 @@
     flex: none;
     filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
   }
-  .flipper {
-    position: absolute;
-    inset: 0;
-    transform-style: preserve-3d;
-  }
+  /* The two faces are stacked. Resting, the front shows and the back is hidden. While a card turns over, each
+     face is swapped in at the halfway point by motion.ts, rather than relying on backface-visibility, which
+     WebKit (Safari, and every browser on iPhone) does not apply reliably. */
   .face-up,
   .face-down {
     position: absolute;
     inset: 0;
-    backface-visibility: hidden;
   }
   .face-down {
-    transform: rotateY(180deg);
+    opacity: 0;
   }
   img,
   .fallback {

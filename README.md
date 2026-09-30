@@ -58,7 +58,17 @@ npm run dev      # start the dev server
 npm test         # run the tests
 npm run check    # type-check
 npm run build    # production build in dist/
+npm run e2e      # browser tests in WebKit (see below)
 ```
+
+### Browser tests
+
+`e2e/` has Playwright tests that run in **WebKit**, the engine behind Safari and every browser on iPhone, against the
+production build (served with the same security headers as the live site). They deal and play real hands and check that:
+cards are dealt face up and the opponents' face down (judged from screenshots, as it depends on how well the browser draws
+a card turning over), the flop and showdown turn out right, nothing throws or is blocked by the security headers, and that
+nothing on the table overlaps or is cut off at five screen sizes from a small phone to a wide desktop, both mid-hand and
+when the result is showing. To set up once: `npx playwright install webkit`.
 
 ## Credits
 
