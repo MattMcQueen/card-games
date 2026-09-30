@@ -6,6 +6,11 @@ import type { Action, Card, GameState, LegalActions, Seat } from './types';
 
 /** How a computer player plays. The five seats each have their own, so the table is not all alike. */
 interface Persona {
+  /**
+   * 0 to 1: how well it plays. A weak player misjudges its hand and the odds, calls bets it should
+   * fold and does not press its good hands. A strong one plays the same style, but sees clearly.
+   */
+  readonly skill: number;
   /** Added to the number of hands played: positive plays more hands, negative fewer. */
   readonly looseness: number;
   /** 0 to 1: how often a good hand bets or raises rather than just calling. */
@@ -15,11 +20,11 @@ interface Persona {
 }
 
 const PERSONAS: readonly Persona[] = [
-  { looseness: 2, aggression: 0.25, bluff: 0.05 }, // Terry: calls too much
-  { looseness: -1, aggression: 0.5, bluff: 0.08 }, // Margaret: solid
-  { looseness: 1, aggression: 0.85, bluff: 0.25 }, // Nigel: fires at everything
-  { looseness: 0, aggression: 0.6, bluff: 0.12 }, // Priya: all-round
-  { looseness: -0.5, aggression: 0.35, bluff: 0.04 }, // Gary: careful
+  { skill: 0.15, looseness: 2, aggression: 0.25, bluff: 0.05 }, // Terry: a beginner who plays too many hands and calls too much
+  { skill: 0.8, looseness: -1, aggression: 0.5, bluff: 0.08 }, // Margaret: solid and patient
+  { skill: 0.4, looseness: 1, aggression: 0.85, bluff: 0.25 }, // Nigel: fires at everything, and often gets it wrong
+  { skill: 0.95, looseness: 0, aggression: 0.6, bluff: 0.12 }, // Priya: sharp and well rounded
+  { skill: 0.55, looseness: -0.5, aggression: 0.35, bluff: 0.04 }, // Gary: careful, but average
 ];
 
 /** How good a seat's place is: the button acts last after the flop, so it can play more hands. */
@@ -137,8 +142,9 @@ function preflopRaises(state: GameState): number {
 
 function preflop(sit: Situation): Action {
   const { state, seat, legal, persona, random, stack } = sit;
-  const score = chenScore(seat.hole[0] as Card, seat.hole[1] as Card);
-  const position = POSITION_VALUE[(seat.id - state.button + SEATS) % SEATS] ?? 0;
+  // A weak player misjudges its hand by a point or two, and pays less attention to where it sits.
+  const score = chenScore(seat.hole[0] as Card, seat.hole[1] as Card) + (random() - 0.5) * (1 - persona.skill) * 6;
+  const position = (POSITION_VALUE[(seat.id - state.button + SEATS) % SEATS] ?? 0) * (0.4 + 0.6 * persona.skill);
   const raises = preflopRaises(state);
   const stackInBlinds = stack / BIG_BLIND;
   const shove = sizedRaise(sit, legal.maxRaiseTo);
@@ -176,7 +182,9 @@ function preflop(sit: Situation): Action {
 
 function postflop(sit: Situation): Action {
   const { state, seat, legal, persona, random, pot, opponents } = sit;
-  const equity = estimateEquity(seat.hole, state.board, opponents, opponents > 2 ? 300 : 400, random);
+  // A weak player sizes up its hand with less care: fewer deals of the rest of the hand, so a rougher answer.
+  const trials = Math.round(40 + ((opponents > 2 ? 300 : 400) - 40) * persona.skill ** 2);
+  const equity = estimateEquity(seat.hole, state.board, opponents, trials, random);
   const facing = legal.toCall > 0;
 
   if (!facing) {
@@ -191,7 +199,8 @@ function postflop(sit: Situation): Action {
   }
 
   // A player who bets usually has a better hand than a random one, so shade the odds against big bets.
-  const strength = equity - Math.min(0.2, (0.22 * legal.toCall) / pot);
+  // (A weak player takes less notice of what a bet says about the hand.)
+  const strength = equity - Math.min(0.2, (0.22 * legal.toCall) / pot) * (0.3 + 0.7 * persona.skill);
   const potOdds = legal.toCall / (pot + legal.toCall);
   if (strength >= 0.72 && random() < 0.35 + persona.aggression * 0.6) {
     return sizedRaise(sit, state.currentBet + (pot + legal.toCall) * (0.6 + random() * 0.4));
@@ -200,6 +209,17 @@ function postflop(sit: Situation): Action {
     return sizedRaise(sit, state.currentBet + pot * 0.75);
   }
   return strength >= potOdds + 0.03 - persona.looseness * 0.01 ? CALL : FOLD;
+}
+
+/**
+ * The two habits that cost a weak player chips: calling bets it should fold, and taking the cheap
+ * option (calling or checking) with a hand it should bet or raise. The weaker the player, the more often.
+ */
+function withMistakes(action: Action, { legal, persona, random, stack }: Situation): Action {
+  const weakness = 1 - persona.skill;
+  if (action.type === 'fold' && legal.canCall && legal.toCall <= stack * 0.5 && random() < weakness * 0.45) return CALL;
+  if (action.type === 'raise' && random() < weakness * 0.3) return legal.canCall ? CALL : CHECK;
+  return action;
 }
 
 /** Makes sure the move is allowed: never folds when checking is free, and keeps raises within the limits. */
@@ -234,5 +254,6 @@ export function decide(state: GameState, randomInt: RandomInt = secureRandomInt)
     opponents: state.seats.filter((s) => s.id !== seat.id && !s.folded).length,
     stack: seat.bet + seat.chips,
   };
-  return legalize(state.street === 'preflop' ? preflop(sit) : postflop(sit), legal);
+  const planned = state.street === 'preflop' ? preflop(sit) : postflop(sit);
+  return legalize(withMistakes(planned, sit), legal);
 }

@@ -32,9 +32,15 @@ The game follows the rules of a UK casino cash game.
 
 `src/engine/bot.ts`. Before the flop they use the Chen formula to rate their starting hand against a threshold that
 depends on position, the number of raises and how deep their stack is. After the flop they estimate their equity by
-dealing out the rest of the hand a few hundred times against random hands, shade it down when facing a bet, and compare
-it with the pot odds. Each seat has its own personality (how loose, how aggressive, how often it bluffs). They only see
-what a real player would see, and the engine checks that every move they make is legal.
+dealing out the rest of the hand against random hands, shade it down when facing a bet, and compare it with the pot odds.
+They only see what a real player would see, and the engine checks that every move they make is legal.
+
+Each seat has its own style (how loose, how aggressive, how often it bluffs) and its own **skill** from 0 to 1, so the
+table is a mix of easy and tough players. Skill makes a player worse in four ways: it misjudges its starting hand,
+estimates its winning chances from fewer trials (a rougher answer), takes less notice of what a bet says, and makes two
+mistakes more often: calling bets it should fold, and just calling with hands it should raise. From easiest to toughest:
+Terry (0.15), Nigel (0.4), Gary (0.55), Margaret (0.8), Priya (0.95). In bot-only simulations the results order the same
+way: Priya wins the most chips per hand and Terry loses the most.
 
 ## Structure
 

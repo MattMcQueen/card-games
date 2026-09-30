@@ -88,7 +88,7 @@
     </li>
     <li class="wide">
       <h2>Your opponents</h2>
-      <p>Each computer player has its own style. Terry plays too many hands and calls too much. Margaret is solid and careful. Nigel bets and bluffs at almost anything. Priya is a well-rounded player, and Gary is patient and rarely bluffs. They cannot see your cards, and they play by the same rules as you.</p>
+      <p>Each computer player has its own style and its own level of skill, from easy to tough. Terry is a beginner who plays too many hands, calls too much and often misjudges a hand. Nigel bets and bluffs at almost anything, and often gets it wrong. Gary is careful but ordinary. Margaret is solid and patient. Priya is the toughest: sharp, well rounded and hard to bluff. They cannot see your cards, and they play by the same rules as you.</p>
     </li>
   </ul>
 </div>

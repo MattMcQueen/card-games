@@ -52,13 +52,17 @@ describe('decide', () => {
     return play(g, ...moves);
   };
 
+  // Priya (seat 4) is the strongest player, so her play is the most predictable. With the button on
+  // seat 1 she is first to act.
+  const priya = (holes: string) => rig(gameWithButton(1), { 4: holes }, '');
+
   it('raises with a pair of aces before the flop', () => {
-    const g = at(3, 'As Ad');
+    const g = priya('As Ad');
     for (let seed = 1; seed <= 10; seed++) expect(decide(g, seededRandomInt(seed)).type).toBe('raise');
   });
 
   it('folds the worst hand in the worst seat when nobody has raised', () => {
-    const g = at(3, '7d 2c');
+    const g = priya('7d 2c');
     for (let seed = 1; seed <= 10; seed++) expect(decide(g, seededRandomInt(seed)).type).toBe('fold');
   });
 
@@ -69,6 +73,22 @@ describe('decide', () => {
       expect(decide(junk, seededRandomInt(seed)).type).toBe('fold');
       expect(decide(monster, seededRandomInt(seed)).type).not.toBe('fold');
     }
+  });
+
+  it('has weaker players call bets they should fold, and strong ones fold', () => {
+    // Seat 3 raises to 40 and everyone in between folds, so it is the turn of Priya (seat 4) or,
+    // a few seats on, Terry (seat 1), each with the worst hand.
+    const priya = at(4, '7d 2c', 'raise 40');
+    const terry = at(1, '7d 2c', 'raise 40', 'fold', 'fold', 'fold');
+    expect([priya.toAct, terry.toAct]).toEqual([4, 1]);
+    let priyaCalls = 0;
+    let terryCalls = 0;
+    for (let seed = 1; seed <= 200; seed++) {
+      if (decide(priya, seededRandomInt(seed)).type === 'call') priyaCalls++;
+      if (decide(terry, seededRandomInt(seed)).type === 'call') terryCalls++;
+    }
+    expect(priyaCalls).toBeLessThan(20);
+    expect(terryCalls).toBeGreaterThan(50);
   });
 
   it('never folds when it can check', () => {
