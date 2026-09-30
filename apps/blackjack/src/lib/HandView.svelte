@@ -2,6 +2,7 @@
   import PlayingCard from '@card-games/card-kit/PlayingCard.svelte';
   import { reducedMotion } from '@card-games/card-kit/motion';
   import { handValue, type Card, type HandResult } from '../engine';
+  import { cardOverlap } from './handLayout';
   import { outcomeLabel, signed } from './labels';
   import { DEAL_GAP, dealerDelay, fromShoe } from './motion';
   import Wager from './Wager.svelte';
@@ -31,12 +32,6 @@
   const value = $derived(handValue(cards));
   const totalText = $derived(`${value.soft && value.total < 21 ? 'soft ' : ''}${value.total}`);
   const overlap = $derived(cardOverlap(cards.length));
-
-  /** How far each card tucks under the one before it, as a fraction of a card's width (negative: overlapping). */
-  function cardOverlap(count: number): number {
-    if (count >= 4) return -0.5;
-    return count === 3 ? -0.3 : 0.08;
-  }
 
   function delayFor(index: number): number {
     if (reducedMotion) return 0;
