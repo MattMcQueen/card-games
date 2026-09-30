@@ -1,7 +1,7 @@
 <script lang="ts">
   import { handValue, type Card, type HandResult } from '../engine';
   import { outcomeLabel, signed } from './labels';
-  import { dealerDelay, reducedMotion } from './motion';
+  import { DEAL_GAP, dealerDelay, reducedMotion } from './motion';
   import PlayingCard from './PlayingCard.svelte';
   import Wager from './Wager.svelte';
 
@@ -40,7 +40,7 @@
   function delayFor(index: number): number {
     if (reducedMotion) return 0;
     if (role === 'dealer') return dealerDelay(index);
-    return index === 1 ? 460 : 0;
+    return index === 1 ? 2 * DEAL_GAP : 0;
   }
 </script>
 

@@ -1,5 +1,5 @@
 import { isGameOver, roundNet, type GameState, type PlayerHand } from '../engine';
-import { dealerDelay, reducedMotion, settleDelay } from './motion';
+import { DEAL_GAP, dealerDelay, reducedMotion, settleDelay } from './motion';
 import type { SoundName } from './synth';
 
 export interface Cue {
@@ -24,8 +24,8 @@ function dealCues(next: GameState, { add, when }: Timing) {
   add('chip');
   if (next.shuffled) add('shuffle');
   add('deal', 0);
-  add('deal', when(230, 1));
-  add('deal', when(460, 2));
+  add('deal', when(DEAL_GAP, 1));
+  add('deal', when(2 * DEAL_GAP, 2));
   for (let i = 1; i < next.dealer.length; i++) add('deal', when(dealerDelay(i), i + 2));
 }
 
@@ -40,8 +40,8 @@ function playerCues(prev: GameState, next: GameState, timing: Timing) {
   if (next.hands.length > prev.hands.length) {
     // Split: a second bet goes down and each new hand is dealt a card.
     add('chip');
-    add('deal', when(460, 1));
-    add('deal', when(500, 2));
+    add('deal', when(2 * DEAL_GAP, 1));
+    add('deal', when(2 * DEAL_GAP + 40, 2));
   } else {
     if (betTotal(next.hands) > betTotal(prev.hands)) add('chip'); // double down
     if (cardCount(next.hands) > cardCount(prev.hands)) add('deal', 0);
