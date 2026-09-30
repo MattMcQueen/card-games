@@ -1,7 +1,7 @@
 # Blackjack
 
 A free, single-player blackjack game against the dealer, played entirely in the browser.
-Planned address: https://blackjack.matt-rarely-writes.co.uk. Part of the card-games repository: see the README at
+Play it at https://blackjack.matt-rarely-writes.co.uk. Part of the card-games repository: see the README at
 the root for how the games are put together.
 
 Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,

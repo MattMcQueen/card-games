@@ -3,7 +3,7 @@
 Free, single-player card games played entirely in the browser, for play money only. Nothing about visitors is
 stored, there is no login and no advertising; the sites are funded by a Ko-fi "Support me" button.
 
-| Game | Folder | Address (planned) |
+| Game | Folder | Address |
 |---|---|---|
 | Blackjack | [`apps/blackjack`](apps/blackjack) | https://blackjack.matt-rarely-writes.co.uk |
 | Texas Hold'em | [`apps/poker`](apps/poker) | https://poker.matt-rarely-writes.co.uk |
@@ -87,8 +87,10 @@ guard it.
 
 Each game is its own Azure Static Web App. GitHub Actions builds it (Azure's own build does not understand npm
 workspaces) and uploads `apps/<game>/dist`: see `.github/workflows/`. A game is tested and redeployed only when it or
-a shared package changes. Deploying needs the app's deploy token as the repository secret
-`AZURE_STATIC_WEB_APPS_API_TOKEN_<GAME>`; until it is added the deploy step only says so.
+a shared package changes. The apps are `swa-blackjack` and `swa-poker` (Free plan)
+in the `rg-matt-rarely-writes` resource group, with their addresses as CNAME records at Porkbun. Deploying uses
+each app's deploy token, kept as the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN_<GAME>`; without it the
+deploy step only says so.
 
 ## Rebuilding the card images and sounds
 

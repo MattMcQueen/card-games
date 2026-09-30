@@ -1,6 +1,7 @@
 # Texas Hold'em
 
 A free, single-player Texas Hold'em game against five computer players, played entirely in the browser.
+Play it at https://poker.matt-rarely-writes.co.uk.
 
 Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,
 there is no login, and no advertising. The site is funded by a Ko-fi "Support me" button.
