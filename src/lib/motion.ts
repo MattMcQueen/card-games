@@ -23,20 +23,29 @@ export function deal(node: Element, { delay = 0 } = {}) {
   };
 }
 
-/** The card turning face up as it lands: it starts showing its back, then flips over. */
-export function flip(node: Element, { delay = 0 } = {}) {
-  if (reducedMotion) return { duration: 0 };
-  return {
-    delay,
-    duration: DEAL_DURATION,
-    css: (t: number) => {
-      // Face down for the first half of the flight, then a quick turn over.
-      const turn = Math.min(1, Math.max(0, (t - 0.45) / 0.5));
-      const eased = 1 - (1 - turn) ** 3;
-      return `transform: perspective(700px) rotateY(${(1 - eased) * 180}deg);`;
-    },
+/**
+ * The card turning face up as it lands: it starts showing its back, then flips over. It is done as
+ * two transitions, one for each face, that each turn the face and swap it in or out at the halfway
+ * point, which draws the same in every browser.
+ */
+function turn(front: boolean) {
+  return (node: Element, { delay = 0 } = {}) => {
+    if (reducedMotion) return { duration: 0 };
+    return {
+      delay,
+      duration: DEAL_DURATION,
+      css: (t: number) => {
+        // Face down for the first half of the flight, then a quick turn over.
+        const progress = Math.min(1, Math.max(0, (t - 0.45) / 0.5));
+        const angle = (1 - progress) ** 3 * 180; // 180 (back showing) down to 0 (front showing)
+        const showing = front ? angle <= 90 : angle > 90;
+        return `transform: perspective(700px) rotateY(${front ? angle : angle - 180}deg); opacity: ${showing ? 1 : 0};`;
+      },
+    };
   };
 }
+export const flipUp = turn(true);
+export const flipDown = turn(false);
 
 /** How long the dealer's cards take to arrive, in milliseconds. */
 export function dealerDelay(index: number): number {
