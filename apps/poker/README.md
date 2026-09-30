@@ -3,8 +3,8 @@
 A free, single-player Texas Hold'em game against five computer players, played entirely in the browser.
 Play it at https://poker.matt-rarely-writes.co.uk.
 
-Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,
-there is no login, and no advertising. The site is funded by a Ko-fi "Support me" button.
+Not gambling: there is no real money, and chips have no value. There are no cookies,
+no login and no advertising; visits are counted with Cloudflare Web Analytics, which does not identify anyone. The site is funded by a Ko-fi "Support me" button.
 
 Built from the same pieces as the blackjack game (Svelte 5, Vite, TypeScript, a pure and well-tested rules
 engine, no backend), in the card-games repository: see the README at the root for how the games are put together.

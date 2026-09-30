@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
+    "./analytics": "./src/analytics.ts",
     "./app.css": "./src/app.css",
     "./cardImages": "./src/cardImages.ts",
     "./chips": "./src/chips.ts",

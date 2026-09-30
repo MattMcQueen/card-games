@@ -4,8 +4,8 @@ A free, single-player blackjack game against the dealer, played entirely in the 
 Play it at https://blackjack.matt-rarely-writes.co.uk. Part of the card-games repository: see the README at
 the root for how the games are put together.
 
-Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,
-there is no login, and no advertising. The site is funded by a Ko-fi "Support me" button.
+Not gambling: there is no real money, and chips have no value. There are no cookies,
+no login and no advertising; visits are counted with Cloudflare Web Analytics, which does not identify anyone. The site is funded by a Ko-fi "Support me" button.
 
 ## Rules
 

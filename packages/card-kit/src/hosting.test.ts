@@ -10,11 +10,11 @@ const directives = Object.fromEntries(
 );
 
 describe('security headers', () => {
-  it('only lets the page load its own files, plus Ko-fi in a frame', () => {
+  it('only lets the page load its own files, plus Ko-fi in a frame and Cloudflare Web Analytics', () => {
     expect(directives['default-src']).toEqual(["'self'"]);
-    expect(directives['script-src']).toEqual(["'self'"]);
+    expect(directives['script-src']).toEqual(["'self'", 'https://static.cloudflareinsights.com']);
     expect(directives['frame-src']).toEqual(['https://ko-fi.com']);
-    expect(directives['connect-src']).toEqual(["'self'"]);
+    expect(directives['connect-src']).toEqual(["'self'", 'https://cloudflareinsights.com']);
   });
 
   it('never allows inline or eval code', () => {

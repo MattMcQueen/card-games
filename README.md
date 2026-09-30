@@ -1,7 +1,8 @@
 # Card games
 
-Free, single-player card games played entirely in the browser, for play money only. Nothing about visitors is
-stored, there is no login and no advertising; the sites are funded by a Ko-fi "Support me" button.
+Free, single-player card games played entirely in the browser, for play money only. There are no cookies, no login
+and no advertising; visits are counted with Cloudflare Web Analytics (as on Brand New), which does not identify
+anyone. The sites are funded by a Ko-fi "Support me" button.
 
 | Game | Folder | Address |
 |---|---|---|

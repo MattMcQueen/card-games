@@ -14,8 +14,8 @@
     <li class="wide" id="privacy">
       <h2>Privacy</h2>
       <ul class="points">
-        <li>No accounts, no cookies, and nothing about you is stored or sent anywhere. Your chips only exist while the page is open, so refreshing starts a new game.</li>
-        <li>There are no adverts and no analytics.</li>
+        <li>No accounts and no cookies. Your chips only exist while the page is open, so refreshing starts a new game.</li>
+        <li>There are no adverts. Visits are counted with Cloudflare Web Analytics, which uses no cookies and does not follow you from site to site: it sees which page was opened, the browser and roughly which country, not who you are (<a href="https://www.cloudflare.com/web-analytics/" rel="noopener" target="_blank">how it works</a>).</li>
         <li>The "Support me" button shows Ko-fi's donation form, but only when you press it. Until then nothing is loaded from Ko-fi, and once you open it <a href="https://more.ko-fi.com/privacy" rel="noopener" target="_blank">Ko-fi's privacy policy</a> applies to that form.</li>
       </ul>
     </li>
