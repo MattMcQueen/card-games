@@ -49,8 +49,13 @@ describe('caching', () => {
 
 describe('pages', () => {
   it('serves the game for the addresses of its other pages, so they can be opened or refreshed', () => {
-    for (const route of ['/how-to-play', '/how-to-play/', '/about', '/about/']) {
+    for (const route of ['/how-to-play', '/about']) {
       expect(config.routes.find((r) => r.route === route)).toMatchObject({ rewrite: '/index.html' });
     }
+  });
+
+  it('has one rule per address, as Azure refuses to deploy a rule that differs only by a trailing slash (it matches those anyway)', () => {
+    const addresses = config.routes.map((r) => r.route.replace(/\/$/, ''));
+    expect(new Set(addresses).size).toBe(addresses.length);
   });
 });
