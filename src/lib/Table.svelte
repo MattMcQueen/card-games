@@ -32,7 +32,7 @@
   <div class="felt">
     <TableMarkings faded={inRound} />
     <p class="balance" aria-label="Chips: {shownChips}">
-      <span class="balance-chip"><Chip value={5} /></span>
+      <span class="balance-chip"><Chip value={1} /></span>
       <strong>{shownChips}</strong>
     </p>
     <div class="shoe-corner"><Shoe /></div>
