@@ -5,8 +5,8 @@ A free, single-player Texas Hold'em game against five computer players, played e
 Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,
 there is no login, and no advertising. The site is funded by a Ko-fi "Support me" button.
 
-Built from the same pieces as the sister blackjack site (Svelte 5, Vite, TypeScript, a pure and
-well-tested rules engine, no backend).
+Built from the same pieces as the blackjack game (Svelte 5, Vite, TypeScript, a pure and well-tested rules
+engine, no backend), in the card-games repository: see the README at the root for how the games are put together.
 
 ## Rules
 
@@ -45,13 +45,15 @@ way: Priya wins the most chips per hand and Terry loses the most.
 ## Structure
 
 - `src/engine/` - the rules, with no UI: `game.ts` (dealing, betting rounds, settlement), `evaluate.ts` (hand ranking,
-  packed into one number so hands compare with `>`), `pots.ts` (side pots), `bot.ts`, `deck.ts`.
+  packed into one number so hands compare with `>`), `pots.ts` (side pots) and `bot.ts`. The deck and shuffle are shared, in `packages/cards-core`.
   Everything is immutable: `act(state, action)` returns the next state. Tests include rigged decks for showdowns and side pots,
   and random play that checks no chips are ever created or lost.
 - `src/lib/` - the Svelte components, sounds (`cues.ts` decides which sound goes with a change of state) and timing (`motion.ts`).
 - `src/App.svelte` - holds the game state and takes the computer players' turns a little apart so you can follow.
 
 ## Commands
+
+From this folder (or from the root with `-w apps/poker`):
 
 ```
 npm run dev      # start the dev server
@@ -70,18 +72,7 @@ a card turning over), the flop and showdown turn out right, nothing throws or is
 nothing on the table overlaps or is cut off at five screen sizes from a small phone to a wide desktop, both mid-hand and
 when the result is showing. To set up once: `npx playwright install webkit`.
 
-## Credits
+## Credits, look and feel
 
-- Card artwork: Byron Knoll's vector playing cards, released into the public domain
-  (https://commons.wikimedia.org/wiki/Category:Playing_cards_set_by_Byron_Knoll). They are converted to small
-  WebP images by `scripts/build-cards.mjs` (see the comments at the top for how to rebuild them).
-- Card and chip sounds: recordings from Kenney's Casino Audio pack (https://kenney.nl/assets/casino-audio), released under
-  Creative Commons Zero. The win and lose jingles are synthesised in the browser.
-- Fonts: Figtree, Young Serif and DM Sans, under the SIL Open Font License (see `src/fonts/README.md`).
-
-## Look and feel
-
-Styled to match the blackjack site and Brand New: slate colours, terracotta accent, pill navigation and the floating
-"Support me" button. The colours are tokens in `src/app.css`, including the table's own felt, walnut and gold. The menu has
-Game, How to play and About; they are real addresses (`/`, `/how-to-play`, `/about`) that the host serves the same page
-for (`public/staticwebapp.config.json`), so the game keeps running while you read the rules.
+The card artwork, sounds, fonts, colours and the page around the game are shared by all the games and live in
+`packages/card-kit`; see the README at the root of the repository for what they are and where they come from.

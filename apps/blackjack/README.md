@@ -1,7 +1,8 @@
 # Blackjack
 
 A free, single-player blackjack game against the dealer, played entirely in the browser.
-Planned address: https://blackjack.matt-rarely-writes.co.uk
+Planned address: https://blackjack.matt-rarely-writes.co.uk. Part of the card-games repository: see the README at
+the root for how the games are put together.
 
 Not gambling: there is no real money, and chips have no value. Nothing about visitors is stored,
 there is no login, and no advertising. The site is funded by a Ko-fi "Support me" button.
@@ -22,19 +23,28 @@ there is no login, and no advertising. The site is funded by a Ko-fi "Support me
 - Insurance: offered when the dealer's card is an ace, before the player acts (even with a player blackjack). It costs half the bet, rounded down (so a bet of 1 cannot be insured, and the chips must be available), and pays 2:1 if the dealer's next card gives them blackjack. It is settled when the dealer draws their second card; if insurance was taken the dealer always draws it, even after a bust or surrender.
 - Refreshing the page restarts the game.
 
-## Credits
+## Structure
 
-- Card artwork: Byron Knoll's vector playing cards, released into the public domain
-  (https://commons.wikimedia.org/wiki/Category:Playing_cards_set_by_Byron_Knoll). They are converted to small
-  WebP images by `scripts/build-cards.mjs` (see the comments at the top for how to rebuild them).
-- Card and chip sounds: recordings from Kenney's Casino Audio pack (https://kenney.nl/assets/casino-audio), released under
-  Creative Commons Zero. The win, lose and blackjack jingles are synthesised in the browser.
-- Fonts: Figtree, Young Serif and DM Sans, under the SIL Open Font License (see `src/fonts/README.md`).
+- `src/engine/` - the rules, with no UI: `game.ts` (dealing, player choices, the dealer, settlement) and `hand.ts`
+  (hand values). Everything is immutable: `act(state, action)` returns the next state.
+- `src/lib/` - the Svelte components, sounds (`cues.ts` decides which sound goes with a change of state) and timing (`motion.ts`).
+- `src/App.svelte` - holds the game state.
+- `e2e/` - browser tests in WebKit: a round is dealt face up and played to the end with nothing blocked by the security
+  headers, and nothing on the table overlaps at five screen sizes.
 
-## Look and feel
+## Commands
 
-The site is styled to match Brand New (https://brand-new.matt-rarely-writes.co.uk): the same slate colours, terracotta
-accent, fonts, pill navigation, flat pill buttons and floating "Support me" button. The colours are tokens in
-`src/app.css`, including the table's own felt, walnut and gold. The menu has Game, How to play and About; they are
-real addresses (`/`, `/how-to-play`, `/about`) that the host serves the same page for, so the game keeps running while
-you read the rules.
+From this folder (or from the root with `-w apps/blackjack`):
+
+```
+npm run dev      # start the dev server
+npm test         # run the tests
+npm run check    # type-check
+npm run build    # production build in dist/
+npm run e2e      # browser tests in WebKit
+```
+
+## Credits, look and feel
+
+The card artwork, sounds, fonts, colours and the page around the game are shared by all the games and live in
+`packages/card-kit`; see the README at the root of the repository for what they are and where they come from.

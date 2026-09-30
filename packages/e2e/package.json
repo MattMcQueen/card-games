@@ -1,0 +1,18 @@
+{
+  "name": "@card-games/e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./config": "./src/config.ts",
+    "./helpers": "./src/helpers.ts"
+  },
+  "scripts": {
+    "check": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.19.0",
+    "typescript": "^6.0.3"
+  }
+}

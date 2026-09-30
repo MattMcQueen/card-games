@@ -1,0 +1,57 @@
+name: Blackjack
+
+# Blackjack and poker each have their own workflow, so a change to one game does not test or
+# redeploy the other. A change to the shared packages does both.
+on:
+  pull_request:
+    paths: &paths
+      - apps/blackjack/**
+      - packages/**
+      - package.json
+      - package-lock.json
+      - tsconfig.base.json
+      - .github/workflows/blackjack.yml
+      - .github/workflows/game.yml
+  push:
+    branches: [main]
+    paths: *paths
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/game.yml
+    with:
+      game: blackjack
+
+  # Publishes main to the game's Azure Static Web App (blackjack.matt-rarely-writes.co.uk). Until the app's deploy token
+  # has been added as the repository secret AZURE_STATIC_WEB_APPS_API_TOKEN_BLACKJACK, this only says so and does nothing.
+  deploy:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACKJACK }}
+    steps:
+      - if: env.TOKEN == ''
+        run: echo "::notice::Not deployed; add the AZURE_STATIC_WEB_APPS_API_TOKEN_BLACKJACK secret to publish Blackjack."
+      - if: env.TOKEN != ''
+        uses: actions/checkout@v4
+      - if: env.TOKEN != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - if: env.TOKEN != ''
+        run: npm ci && npm run build -w apps/blackjack
+      # The site is built above (Azure's own build does not understand npm workspaces), so this
+      # only uploads apps/blackjack/dist, which includes the headers and routes in staticwebapp.config.json.
+      - if: env.TOKEN != ''
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.TOKEN }}
+          action: upload
+          app_location: apps/blackjack/dist
+          skip_app_build: true
+          skip_api_build: true

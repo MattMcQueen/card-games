@@ -1,0 +1,35 @@
+name: Game
+
+# The checks for one game, called by that game's own workflow (blackjack.yml, poker.yml): type-check,
+# unit tests and build for the game and the shared packages, then the game's WebKit tests.
+on:
+  workflow_call:
+    inputs:
+      game:
+        description: The folder under apps/
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      WORKSPACES: -w apps/${{ inputs.game }} -w packages/card-kit -w packages/cards-core -w packages/e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check $WORKSPACES --if-present
+      - run: npm test $WORKSPACES --if-present
+      - run: npm run build -w apps/${{ inputs.game }}
+      # Safari's engine, and what it needs from the system, for the end-to-end tests.
+      - run: npx playwright install --with-deps webkit
+      - run: npm run e2e -w apps/${{ inputs.game }}
+        env:
+          CI: true

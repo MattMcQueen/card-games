@@ -38,7 +38,7 @@
     </li>
     <li class="wide">
       <h2>Made by</h2>
-      <p>Matt McQueen. The code is open source under the MIT licence on <a href="https://github.com/MattMcQueen/blackjack" rel="noopener" target="_blank">GitHub</a>.</p>
+      <p>Matt McQueen. The code is open source under the MIT licence on <a href="https://github.com/MattMcQueen/card-games/tree/main/apps/blackjack" rel="noopener" target="_blank">GitHub</a>.</p>
     </li>
   </ul>
 </div>

@@ -1,0 +1,89 @@
+import type { Locator, Page } from '@playwright/test';
+
+/** Clicks the speaker button so the tests are silent, as the games start with sound on. */
+export async function mute(page: Page) {
+  await page.getByRole('button', { name: 'Mute sound' }).click();
+}
+
+/** Errors the page reports: exceptions, console errors, and anything the security headers block. */
+export function collectErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(`exception: ${error.message}`));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(`console: ${message.text()}`);
+  });
+  return errors;
+}
+
+/**
+ * Whether a card is showing its face and not its back, judged from a picture of the middle of it:
+ * the back is red lattice all over, while even a red card's face has a good deal of paper showing.
+ * Only a real browser can say, as it depends on how well it draws the turning of a card.
+ * Taking the picture adds a stylesheet that the site's security headers refuse, so a test that
+ * uses this cannot also expect `collectErrors` to find nothing.
+ */
+export async function isFaceUp(page: Page, card: Locator): Promise<boolean> {
+  const picture = (await card.screenshot()).toString('base64');
+  const lattice = await page.evaluate(async (data) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d') as CanvasRenderingContext2D;
+    context.drawImage(image, 0, 0);
+    const [x, y] = [Math.round(image.width * 0.25), Math.round(image.height * 0.25)];
+    const pixels = context.getImageData(x, y, Math.round(image.width / 2), Math.round(image.height / 2)).data;
+    let count = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const [red, green] = [pixels[i] as number, pixels[i + 1] as number];
+      if (red > 100 && green < 80 && red - green > 50) count++;
+    }
+    return count / (pixels.length / 4);
+  }, picture);
+  return lattice < 0.8; // a card back measures 0.9 or more; even a very red face is well under
+}
+
+/** The screen sizes the layout is checked at, from a small phone to a desktop. */
+export const sizes = [
+  { name: 'small phone', width: 360, height: 640 },
+  { name: 'phone', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'laptop', width: 1280, height: 720 },
+  { name: 'desktop', width: 1920, height: 1080 },
+];
+
+/** Something on the table, where it is on screen. Things in the same group (a seat and its own cards) may touch. */
+export interface Box {
+  name: string;
+  group: string;
+  l: number;
+  t: number;
+  r: number;
+  b: number;
+}
+
+/** Where everything on a game's table is (measured in the page), the table itself, and whether the page scrolls sideways. */
+export interface Measurements {
+  boxes: Box[];
+  felt: Omit<Box, 'name' | 'group'>;
+  scrollsSideways: boolean;
+}
+
+const cutOff = (a: Box, felt: Measurements['felt']) => a.l < felt.l - 1 || a.r > felt.r + 1 || a.t < felt.t - 1 || a.b > felt.b + 1;
+/** How far, in pixels across and down, two boxes overlap; nothing (0) if they do not, or only touch. */
+const overlap = (a: Box, b: Box) => [Math.min(a.r, b.r) - Math.max(a.l, b.l), Math.min(a.b, b.b) - Math.max(a.t, b.t)] as const;
+
+/** Every pair of things on the table that overlap, and anything cut off by its edge. */
+export function problemsIn({ boxes, felt, scrollsSideways }: Measurements): string[] {
+  const found = scrollsSideways ? ['the page scrolls sideways'] : [];
+  for (const [i, a] of boxes.entries()) {
+    if (cutOff(a, felt)) found.push(`${a.name} is cut off by the edge of the table`);
+    for (const b of boxes.slice(i + 1).filter((other) => other.group !== a.group)) {
+      const [w, h] = overlap(a, b);
+      if (w > 3 && h > 3) found.push(`${a.name} overlaps ${b.name} by ${Math.round(w)} x ${Math.round(h)}`);
+    }
+  }
+  return found;
+}
