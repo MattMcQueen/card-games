@@ -74,7 +74,9 @@
     display: grid;
     grid-template-rows: auto auto 1fr;
     gap: 0.25rem;
-    min-height: clamp(27rem, 62vh, 36rem);
+    /* Never taller than the screen leaves room for (after the header, and the chips and buttons below),
+       so Deal is in view on a phone without scrolling. dvh is the height the browser's toolbars leave. */
+    min-height: clamp(20rem, min(62vh, 100dvh - 19.5rem), 36rem);
     padding: 1rem 0.5rem 1rem;
     border-radius: clamp(0.8rem, 3vw, 1.7rem);
     overflow: hidden;

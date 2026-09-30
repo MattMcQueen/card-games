@@ -3,6 +3,9 @@
 
   const KOFI_URL = 'https://ko-fi.com/mattrarelywrites';
 
+  /** The game's name, as its logo shows it. */
+  let { name }: { name: string } = $props();
+
   let button: HTMLButtonElement;
   let panel: HTMLDivElement;
   let tucked = $state(false);
@@ -29,8 +32,12 @@
   // doesn't stop you clicking it. (The same as on Brand New.)
   let queued = false;
   function coversControl() {
-    const r = button.getBoundingClientRect();
-    const limit = r.width * r.height * 4;
+    // Where the button rests, from its layout box: while it is tucked away it is slid off the screen, and
+    // measuring it there would find nothing underneath and bring it straight back.
+    const left = button.offsetLeft;
+    const top = button.offsetTop;
+    const r = { left, top, right: left + button.offsetWidth, bottom: top + button.offsetHeight };
+    const limit = button.offsetWidth * button.offsetHeight * 4;
     const points: [number, number][] = [
       [r.left + 2, r.top + 2],
       [r.right - 2, r.top + 2],
@@ -50,8 +57,7 @@
   }
   function update() {
     queued = false;
-    tucked = false; // measure where it would be
-    if (!panel.matches(':popover-open')) tucked = coversControl();
+    tucked = !panel.matches(':popover-open') && coversControl();
   }
   function queue() {
     if (queued) return;
@@ -59,18 +65,24 @@
     requestAnimationFrame(update);
   }
 
-  // The page changes shape as the game goes on, so look again whenever it does.
+  // The page changes shape as the game goes on, so look again whenever it does, and once the fonts
+  // and images have arrived, which can move things (such as Deal, at the foot of a phone's screen).
   $effect(() => {
     const observer = new ResizeObserver(queue);
     observer.observe(document.body);
     queue();
-    return () => observer.disconnect();
+    void document.fonts.ready.then(queue);
+    addEventListener('load', queue);
+    return () => {
+      observer.disconnect();
+      removeEventListener('load', queue);
+    };
   });
 </script>
 
 <svelte:window onscroll={queue} onresize={queue} />
 
-<aside class="support" aria-label="Support Blackjack">
+<aside class="support" aria-label="Support {name}">
   <button
     bind:this={button}
     type="button"
@@ -78,14 +90,14 @@
     class:is-tucked={tucked}
     popovertarget="kofi-panel"
     {onclick}
-    title="Support Blackjack on Ko-fi"
+    title="Support {name} on Ko-fi"
     aria-label="Support me on Ko-fi"
   >
     <img src={logo} width="39" height="31" alt="" /><span>Support me</span>
   </button>
   <div class="support-panel" id="kofi-panel" bind:this={panel} popover="auto" ontoggle={queue}>
     <div class="support-head">
-      <p><strong>Support Blackjack</strong></p>
+      <p><strong>Support {name}</strong></p>
       <button class="icon-btn" type="button" onclick={() => panel.hidePopover()} title="Close" aria-label="Close">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M6 6l12 12M18 6 6 18" />
@@ -95,7 +107,7 @@
     <div class="support-frame">
       {#if opened}
         <iframe
-          title="Support Blackjack on Ko-fi"
+          title="Support {name} on Ko-fi"
           src="{KOFI_URL}/?hidefeed=true&widget=true&embed=true"
           referrerpolicy="no-referrer"
         ></iframe>

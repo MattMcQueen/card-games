@@ -102,6 +102,32 @@ test.describe('layout', () => {
 
   const problems = async (page: Page) => problemsIn(await measure(page));
 
+  /** How far "Your bet" reaches outside its ring, in pixels (negative: inside), judged at the label's corners. */
+  const labelOutsideRing = (page: Page) =>
+    page.evaluate(() => {
+      const ring = (document.querySelector('.bet-spot') as Element).getBoundingClientRect();
+      const label = (document.querySelector('.bet-label') as Element).getBoundingClientRect();
+      const radius = ring.width / 2;
+      const [cx, cy] = [ring.left + radius, ring.top + radius];
+      const corners = [[label.left, label.top], [label.right, label.top], [label.left, label.bottom], [label.right, label.bottom]];
+      return Math.max(...corners.map(([x, y]) => Math.hypot((x as number) - cx, (y as number) - cy) - radius));
+    });
+
+  test('Deal is in view on a phone without scrolling, with nothing over it', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'iphone', 'about the height a phone leaves');
+    await page.goto('/');
+    await mute(page);
+    const button = page.getByRole('button', { name: 'Deal', exact: true });
+    await expect(button).toBeInViewport({ ratio: 1 });
+    // The Support me button moves out of the way of a button it would cover.
+    await expect
+      .poll(() => button.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return el.contains(document.elementFromPoint(r.left + 8, r.top + r.height / 2));
+      }))
+      .toBe(true);
+  });
+
   for (const { name, width, height } of sizes) {
     test(`nothing overlaps on a ${name} (${width} x ${height}), during a round and at the result`, async ({ page }, testInfo) => {
       test.skip(testInfo.project.name !== 'webkit', 'the sizes are set here, so one browser project is enough');
@@ -109,6 +135,7 @@ test.describe('layout', () => {
       await page.goto('/');
       await mute(page);
       expect(await problems(page)).toEqual([]);
+      expect(await labelOutsideRing(page)).toBeLessThan(0);
 
       await deal(page);
       await expect(page.locator('.player-zone .card')).toHaveCount(2);

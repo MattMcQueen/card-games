@@ -44,7 +44,7 @@
   </div>
 </footer>
 
-<SupportMe />
+<SupportMe {name} />
 
 <style>
   main {

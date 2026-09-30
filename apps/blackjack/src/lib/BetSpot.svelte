@@ -21,8 +21,9 @@
     justify-items: center;
     align-content: end;
     gap: 0.3rem;
-    width: calc(var(--chip) * 3.2);
-    height: calc(var(--chip) * 3.2);
+    /* The ring grows with the chips, but never so small on a phone that the label no longer fits inside it. */
+    width: max(calc(var(--chip) * 3.2), 8rem);
+    height: max(calc(var(--chip) * 3.2), 8rem);
     border: 2px solid color-mix(in srgb, var(--gold) 50%, transparent);
     border-radius: 50%;
     padding-bottom: 0.4rem;
