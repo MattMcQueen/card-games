@@ -1,0 +1,150 @@
+<script lang="ts">
+  import { handValue, type Card, type HandResult } from '../engine';
+  import { outcomeLabel, signed } from './labels';
+  import { DEAL_GAP, dealerDelay, reducedMotion } from './motion';
+  import PlayingCard from './PlayingCard.svelte';
+  import Wager from './Wager.svelte';
+
+  let {
+    title,
+    role,
+    cards,
+    bet,
+    active = false,
+    hideTotal = false,
+    result,
+    showPill = false,
+  }: {
+    title: string;
+    role: 'dealer' | 'player';
+    cards: readonly Card[];
+    bet?: number;
+    active?: boolean;
+    /** Hold the total back while the dealer's cards are still arriving. */
+    hideTotal?: boolean;
+    result?: HandResult;
+    /** Label the hand with its own result: only needed when there are several hands to tell apart. */
+    showPill?: boolean;
+  } = $props();
+
+  const value = $derived(handValue(cards));
+  const totalText = $derived(`${value.soft && value.total < 21 ? 'soft ' : ''}${value.total}`);
+  const overlap = $derived(cardOverlap(cards.length));
+
+  /** How far each card tucks under the one before it, as a fraction of a card's width (negative: overlapping). */
+  function cardOverlap(count: number): number {
+    if (count >= 4) return -0.5;
+    return count === 3 ? -0.3 : 0.08;
+  }
+
+  function delayFor(index: number): number {
+    if (reducedMotion) return 0;
+    if (role === 'dealer') return dealerDelay(index);
+    return index === 1 ? 2 * DEAL_GAP : 0;
+  }
+</script>
+
+<section class="hand" class:active aria-label={title}>
+  <h2>
+    <span class="name">{title}</span>
+    {#if cards.length > 0 && !hideTotal}
+      <span class="total">{totalText}</span>
+    {/if}
+  </h2>
+
+  <div class="cards" style="--overlap: {overlap}">
+    {#each cards as card, i (`${i}-${card.rank}${card.suit}`)}
+      <PlayingCard {card} delay={delayFor(i)} />
+    {/each}
+  </div>
+
+  {#if bet !== undefined}
+    <Wager {bet} {result} />
+  {/if}
+
+  {#if showPill}
+    <p class="pill {result ? result.outcome : 'hidden'}" aria-hidden={!result}>
+      {#if result}{outcomeLabel[result.outcome]} {signed(result.net)}{:else}&nbsp;{/if}
+    </p>
+  {/if}
+</section>
+
+<style>
+  .hand {
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.6rem 0.5rem;
+    border: 2px solid transparent;
+    border-radius: 0.9rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .active {
+    border-color: color-mix(in srgb, var(--highlight) 85%, transparent);
+    background: rgb(0 0 0 / 0.12);
+  }
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--on-felt) 85%, transparent);
+  }
+  .total {
+    padding: 0.05rem 0.5rem;
+    border-radius: 1rem;
+    background: rgb(0 0 0 / 0.45);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+  .cards {
+    display: flex;
+    min-height: var(--ch);
+  }
+  .cards > :global(*:not(:first-child)) {
+    margin-left: calc(var(--cw) * var(--overlap));
+  }
+  .pill {
+    margin: 0;
+    padding: 0.15rem 0.8rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  .hidden {
+    visibility: hidden;
+    animation: none;
+  }
+  .win,
+  .blackjack {
+    background: var(--win-bg);
+    color: var(--win-fg);
+  }
+  .lose,
+  .surrender,
+  .bust {
+    background: var(--lose-bg);
+    color: var(--lose-fg);
+  }
+  .push {
+    background: var(--push-bg);
+    color: var(--push-fg);
+  }
+  @keyframes pop {
+    from {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pill {
+      animation: none;
+    }
+  }
+</style>
