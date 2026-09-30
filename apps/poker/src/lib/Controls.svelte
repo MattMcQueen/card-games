@@ -1,5 +1,6 @@
 <script lang="ts">
   import { STARTING_STACK, type GameState, type LegalActions } from '../engine';
+  import { gameOverText } from './labels';
   import YourTurn from './YourTurn.svelte';
 
   let {
@@ -39,7 +40,7 @@
 
 <div class="controls">
   {#if over && showResults}
-    <p class="over">Game over: you are out of chips.</p>
+    <p class="over">{gameOverText(game)}</p>
     <button type="button" class="btn primary" onclick={onrestart}>Play again with {STARTING_STACK} chips</button>
   {:else if game.phase === 'settled'}
     {#if showResults}

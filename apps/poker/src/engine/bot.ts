@@ -1,4 +1,4 @@
-import { BIG_BLIND, SEATS } from './constants';
+import { SEATS } from './constants';
 import { createDeck, mulberry32, secureRandomInt, type RandomInt } from '@card-games/cards-core';
 import { evaluate, rankValue } from './evaluate';
 import { legalActions, potSize } from './game';
@@ -116,7 +116,7 @@ function sizedRaise({ legal, stack }: Situation, to: number): Action {
 
 /** How many times the betting has been raised so far before the flop (the big blind counts as none). */
 function preflopRaises(state: GameState): number {
-  let highest = BIG_BLIND;
+  let highest = state.blinds.big;
   let raises = 0;
   for (const entry of state.log) {
     if (entry.street !== 'preflop' || entry.kind === 'small-blind' || entry.kind === 'big-blind') continue;
@@ -142,7 +142,7 @@ function unopenedPreflop(sit: Situation, score: number, position: number): Actio
   const { state, legal, persona, random } = sit;
   const limpers = state.log.filter((e) => e.street === 'preflop' && e.kind === 'call').length;
   const open = 8.5 - 3 * position - persona.looseness;
-  const size = BIG_BLIND * (2.5 + random()) + limpers * BIG_BLIND;
+  const size = state.blinds.big * (2.5 + random() + limpers);
   if (score >= open) {
     // Sometimes a medium hand just limps in behind, depending on the player.
     const limp = score < open + 2.5 && random() > 0.35 + persona.aggression * 0.5;
@@ -179,7 +179,7 @@ function preflop(sit: Situation): Action {
   const score = chenScore(seat.hole[0] as Card, seat.hole[1] as Card) + (random() - 0.5) * (1 - persona.skill) * 6;
   const position = (POSITION_VALUE[(seat.id - state.button + SEATS) % SEATS] ?? 0) * (0.4 + 0.6 * persona.skill);
   const raises = preflopRaises(state);
-  if (stack / BIG_BLIND <= 10) return shortStackPreflop(sit, score, position, raises);
+  if (stack / state.blinds.big <= 10) return shortStackPreflop(sit, score, position, raises);
   return raises === 0 ? unopenedPreflop(sit, score, position) : facingRaisePreflop(sit, score, position, raises);
 }
 

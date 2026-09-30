@@ -1,10 +1,11 @@
 import { createDeck, secureRandomInt, shuffle, type RandomInt } from '@card-games/cards-core';
-import { BIG_BLIND, BOT_NAMES, HUMAN_SEAT, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
+import { BIG_BLIND, BOT_NAMES, HANDS_PER_LEVEL, HUMAN_SEAT, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
 import { rankHand } from './evaluate';
 import { buildPots } from './pots';
 import type {
   Action,
   ActionKind,
+  Blinds,
   Card,
   GameState,
   HandRank,
@@ -37,6 +38,12 @@ const NO_ACTIONS: LegalActions = {
 
 const NEXT_STREET: Partial<Record<Street, Street>> = { preflop: 'flop', flop: 'turn', turn: 'river' };
 
+/** The blinds in hand number `hand` (counting from 1): 5 and 10 at first, doubling every HANDS_PER_LEVEL hands. */
+export function blindsFor(hand: number): Blinds {
+  const doublings = Math.floor(Math.max(0, hand - 1) / HANDS_PER_LEVEL);
+  return { small: SMALL_BLIND * 2 ** doublings, big: BIG_BLIND * 2 ** doublings };
+}
+
 /** A new game: everyone has the starting stack, and the first hand has been dealt. */
 export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
   const seats: Seat[] = Array.from({ length: SEATS }, (_, id) => ({
@@ -51,6 +58,7 @@ export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
     allIn: false,
     acted: false,
     last: null,
+    place: null,
   }));
   const before: GameState = {
     phase: 'settled',
@@ -59,6 +67,7 @@ export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
     button: randomInt(SEATS),
     smallBlind: 0,
     bigBlind: 0,
+    blinds: blindsFor(1),
     seats,
     board: [],
     deck: [],
@@ -73,9 +82,14 @@ export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
   return nextHand(before, randomInt);
 }
 
-/** The game is over once the settled hand has left you without chips. */
+/** The game is over once a settled hand has left you without chips, or you with all of them. */
 export function isGameOver(state: GameState): boolean {
-  return state.phase === 'settled' && (state.seats[HUMAN_SEAT]?.chips ?? 0) === 0;
+  return state.phase === 'settled' && ((state.seats[HUMAN_SEAT]?.chips ?? 0) === 0 || state.seats.filter((s) => s.chips > 0).length === 1);
+}
+
+/** You have won the game: everyone else is out of chips. */
+export function hasWon(state: GameState): boolean {
+  return isGameOver(state) && (state.seats[HUMAN_SEAT]?.chips ?? 0) > 0;
 }
 
 /** It is a computer player to act. */
@@ -124,27 +138,27 @@ function pay(seat: MutableSeat, amount: number): number {
 }
 
 /**
- * Deals a new hand: the button moves on, the blinds go in and the hole cards are dealt. A computer
- * player who has (nearly) run out of chips buys back in first, as new players do at a real table.
+ * Deals a new hand: the button moves on, the blinds go in and the hole cards are dealt. A player with
+ * no chips left is out of the game, and one with fewer chips than a blind puts in what they have.
  * Play continues until the first decision is yours or a computer player's.
  */
 export function nextHand(state: GameState, randomInt: RandomInt = secureRandomInt): GameState {
   if (isGameOver(state)) throw new Error('The game is over');
   const g = draftOf(state);
   for (const seat of g.seats) {
-    if (!seat.human && seat.chips < BIG_BLIND) seat.chips = STARTING_STACK;
     seat.bet = 0;
     seat.total = 0;
     seat.hole = [];
     seat.allIn = false;
     seat.acted = false;
     seat.last = null;
-    seat.folded = seat.chips === 0; // no chips: sitting out
+    seat.folded = seat.chips === 0; // no chips: out of the game
   }
   const isIn = (s: Seat) => !s.folded;
-  if (g.seats.filter(isIn).length < 3) throw new Error('At least three players are needed');
+  const players = g.seats.filter(isIn).length;
 
   g.hand += 1;
+  g.blinds = blindsFor(g.hand);
   g.phase = 'action';
   g.street = 'preflop';
   g.board = [];
@@ -154,7 +168,8 @@ export function nextHand(state: GameState, randomInt: RandomInt = secureRandomIn
   g.showdown = false;
   g.deck = shuffle(createDeck(), randomInt);
   g.button = seatAfter(g.seats, g.button, isIn);
-  g.smallBlind = seatAfter(g.seats, g.button, isIn);
+  // With two players left the button posts the small blind, so acts first before the flop and last after it.
+  g.smallBlind = players === 2 ? g.button : seatAfter(g.seats, g.button, isIn);
   g.bigBlind = seatAfter(g.seats, g.smallBlind, isIn);
 
   const first = seatAfter(g.seats, g.button, isIn);
@@ -165,12 +180,12 @@ export function nextHand(state: GameState, randomInt: RandomInt = secureRandomIn
     }
   }
 
-  const small = pay(g.seats[g.smallBlind] as MutableSeat, SMALL_BLIND);
-  const big = pay(g.seats[g.bigBlind] as MutableSeat, BIG_BLIND);
+  const small = pay(g.seats[g.smallBlind] as MutableSeat, g.blinds.small);
+  const big = pay(g.seats[g.bigBlind] as MutableSeat, g.blinds.big);
   g.log.push({ kind: 'small-blind', seat: g.smallBlind, amount: small, street: 'preflop' });
   g.log.push({ kind: 'big-blind', seat: g.bigBlind, amount: big, street: 'preflop' });
-  g.currentBet = BIG_BLIND;
-  g.minRaise = BIG_BLIND;
+  g.currentBet = g.blinds.big;
+  g.minRaise = g.blinds.big;
   advance(g, g.bigBlind);
   return g;
 }
@@ -192,7 +207,7 @@ function dealStreet(g: Draft, street: Street): void {
     if (!seat.folded) seat.last = null;
   }
   g.currentBet = 0;
-  g.minRaise = BIG_BLIND;
+  g.minRaise = g.blinds.big;
   draw(g); // the burn card
   for (let i = street === 'flop' ? 3 : 1; i > 0; i--) g.board.push(draw(g));
   g.street = street;
@@ -324,4 +339,17 @@ function settle(g: Draft): void {
   g.showdown = showdown;
   g.phase = 'settled';
   g.toAct = -1;
+  placeFinishers(g);
+}
+
+/**
+ * Players who ran out of chips in this hand are out of the game, and take the places below everyone
+ * still in: of two out in the same hand, the one who started it with more chips finishes higher. Once
+ * one player is left, they have won.
+ */
+function placeFinishers(g: Draft): void {
+  const left = g.seats.filter((s) => s.chips > 0);
+  const out = g.seats.filter((s) => s.chips === 0 && s.place === null).sort((a, b) => b.total - a.total || a.id - b.id);
+  out.forEach((seat, i) => (seat.place = left.length + 1 + i));
+  if (left.length === 1) (left[0] as MutableSeat).place = 1;
 }

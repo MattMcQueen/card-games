@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { act, legalActions } from '../engine';
-import { gameWithButton, play } from '../engine/testing';
-import { announcementFor, entryText, lastLabel, seatStatus } from './labels';
+import { seededRandomInt } from '@card-games/cards-core';
+import { act, legalActions, nextHand } from '../engine';
+import { gameWithButton, play, rig, withChips } from '../engine/testing';
+import { announcementFor, blindsNote, entryText, gameOverText, lastLabel, seatStatus } from './labels';
 
 // Seat 0 (you) has the button; seats 1 and 2 post the blinds and seat 3 (Nigel) acts first.
 const start = () => gameWithButton(0);
@@ -54,6 +55,42 @@ describe('entryText', () => {
     const turned = play(g, 'check', 'check', 'check', 'check', 'check', 'check');
     const turn = turned.log.filter((e) => e.kind === 'board')[1];
     expect(turn && entryText(turn, turned)).toMatch(/^Turn: \w+ of \w+$/);
+  });
+});
+
+const BOARD = '2c 7d 9h Jc 4s';
+const settled = () => play(start(), 'fold', 'fold', 'fold', 'fold', 'fold');
+
+describe('gameOverText', () => {
+  it('says where you finished when you run out of chips', () => {
+    // You go all-in with 30 chips and lose to Terry's aces: the first one out, so 6th.
+    const g = play(rig(withChips(start(), { 0: 30 }), { 0: 'Ks Kd', 1: 'As Ad' }, BOARD), 'fold', 'fold', 'fold', 'allin', 'call', 'fold');
+    expect(gameOverText(g)).toBe('Game over: you finished 6th of 6.');
+  });
+
+  it('says you won once everyone else is out', () => {
+    const headsUp = nextHand(withChips(settled(), { 0: 1000, 1: 0, 2: 0, 3: 1000, 4: 0, 5: 0 }), seededRandomInt(4));
+    const g = play(rig(headsUp, { 0: 'As Ad', 3: '5c 3h' }, BOARD), 'allin', 'call');
+    expect(gameOverText(g)).toBe('You won! Everyone else is out of chips.');
+    expect(announcementFor(g, legalActions(g), false, true)).toBe('You won! Everyone else is out of chips.');
+  });
+});
+
+describe('an empty seat', () => {
+  it('shows where its player finished', () => {
+    const g = play(rig(withChips(start(), { 0: 30 }), { 0: 'Ks Kd', 1: 'As Ad' }, BOARD), 'fold', 'fold', 'fold', 'allin', 'call', 'fold');
+    expect(seatStatus(g.seats[0]!, undefined)).toBe('6th');
+    const headsUp = nextHand(withChips(settled(), { 0: 1000, 1: 0, 2: 0, 3: 1000, 4: 0, 5: 0 }), seededRandomInt(4));
+    const won = play(rig(headsUp, { 0: 'As Ad', 3: '5c 3h' }, BOARD), 'allin', 'call');
+    expect(seatStatus(won.seats[3]!, undefined)).toBe('2nd');
+  });
+});
+
+describe('blindsNote', () => {
+  it('names the blinds that are in, and says when they have gone up', () => {
+    expect(blindsNote(start())).toBe('Nothing yet: the blinds (5/10) are in.');
+    expect(blindsNote(nextHand({ ...settled(), hand: 10 }, seededRandomInt(4)))).toBe('The blinds are up to 10/20.');
+    expect(blindsNote(nextHand({ ...settled(), hand: 11 }, seededRandomInt(4)))).toBe('Nothing yet: the blinds (10/20) are in.');
   });
 });
 

@@ -38,6 +38,14 @@ export interface Seat {
   /** Has had a turn on this street (only matters for the option a player has when nobody has raised). */
   readonly acted: boolean;
   readonly last: LastAction | null;
+  /** Where the player finished, once they are out of chips: 6th for the first out, and 1st for the winner. */
+  readonly place: number | null;
+}
+
+/** The forced bets that start each hand. */
+export interface Blinds {
+  readonly small: number;
+  readonly big: number;
 }
 
 export type HandCategory =
@@ -103,6 +111,8 @@ export interface GameState {
   /** The seats that posted the small and the big blind. */
   readonly smallBlind: number;
   readonly bigBlind: number;
+  /** The size of the blinds in this hand: they go up as the game goes on. */
+  readonly blinds: Blinds;
   readonly seats: readonly Seat[];
   readonly board: readonly Card[];
   /** Undealt cards, next card first. */

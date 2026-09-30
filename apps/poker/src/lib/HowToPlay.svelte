@@ -1,6 +1,6 @@
 <script lang="ts">
   import { follow } from '@card-games/card-kit/router.svelte';
-  import { BIG_BLIND, SEATS, SMALL_BLIND, STARTING_STACK } from '../engine';
+  import { BIG_BLIND, HANDS_PER_LEVEL, SEATS, SMALL_BLIND, STARTING_STACK } from '../engine';
 
   // The hands from best to worst, with an example of each. Suits are written as letters to keep the page plain.
   const hands = [
@@ -21,15 +21,20 @@
   <section class="hero">
     <span class="kicker">How to play</span>
     <h1>Win the pot with the best five cards</h1>
-    <p>Texas Hold'em against five computer players, played the way it is in a UK casino cardroom: no limit, with blinds and no antes.</p>
+    <p>A Texas Hold'em tournament against five computer players, played the way it is in a UK casino cardroom: no limit, with blinds that go up as the game goes on, and no antes. The last player with chips wins.</p>
     <a class="btn primary" href="/" onclick={follow('game')}>Back to the game</a>
   </section>
 
   <ul class="facts">
     <li>
-      <h2>The table</h2>
-      <p>You and five computer players sit at a table of {SEATS}. Everyone starts with {STARTING_STACK} chips. The blinds are {SMALL_BLIND} and {BIG_BLIND} and stay the same all game.</p>
-      <p>The computer players buy back in if they run out, as new players do at a real table. If you run out, the game is over and you can start again.</p>
+      <h2>The game</h2>
+      <p>You and five computer players sit at a table of {SEATS}, and everyone starts with {STARTING_STACK} chips. A player who runs out of chips is out of the game, and their seat stays empty.</p>
+      <p>Knock everyone else out and you win. If you run out first, the game tells you where you finished (6th for the first one out), and you can start again.</p>
+    </li>
+    <li>
+      <h2>The blinds</h2>
+      <p>The blinds start at {SMALL_BLIND} and {BIG_BLIND} and double every {HANDS_PER_LEVEL} hands: {SMALL_BLIND * 2} and {BIG_BLIND * 2} from hand {HANDS_PER_LEVEL + 1}, {SMALL_BLIND * 4} and {BIG_BLIND * 4} from hand {HANDS_PER_LEVEL * 2 + 1}, and so on. They keep the game moving towards a finish.</p>
+      <p>The hand number and blinds are shown on the table, and "This hand" says when the blinds go up. A player with fewer chips than a blind puts in what they have, and is all-in.</p>
     </li>
     <li>
       <h2>The goal</h2>
@@ -38,7 +43,8 @@
     <li class="wide">
       <h2>A hand</h2>
       <ul class="points">
-        <li>The <strong>dealer button</strong> (D) moves one seat clockwise each hand. The player to its left posts the <strong>small blind</strong> ({SMALL_BLIND}) and the next posts the <strong>big blind</strong> ({BIG_BLIND}). These forced bets start the pot.</li>
+        <li>The <strong>dealer button</strong> (D) moves one seat clockwise each hand, passing by empty seats. The player to its left posts the <strong>small blind</strong> and the next posts the <strong>big blind</strong>. These forced bets start the pot.</li>
+        <li><strong>Two players left:</strong> the dealer posts the small blind, so acts first before the flop and last after it, as in a casino.</li>
         <li>Everyone is dealt two private cards, called hole cards. You are the only one who sees yours.</li>
         <li><strong>Pre-flop:</strong> betting starts with the player left of the big blind, and goes clockwise.</li>
         <li><strong>The flop:</strong> three shared cards are dealt face up, and there is another round of betting, starting with the small blind (or the first player still in after it).</li>
@@ -62,7 +68,7 @@
       <h2>Betting rules</h2>
       <ul class="points">
         <li><strong>No limit:</strong> you can bet any amount, up to all of your chips, at any time.</li>
-        <li><strong>Minimum bet:</strong> the big blind ({BIG_BLIND}) after the flop.</li>
+        <li><strong>Minimum bet:</strong> the big blind after the flop ({BIG_BLIND} at the start).</li>
         <li><strong>Minimum raise:</strong> at least as big as the last bet or raise in that round. If someone bets 20 and someone raises to 60 (a raise of 40), the next raise must be to at least 100.</li>
         <li><strong>The big blind's option:</strong> if everyone just calls before the flop, the big blind may check or raise.</li>
         <li><strong>Short all-ins:</strong> a player who goes all-in for less than a full raise does not reopen the betting: players who have already acted can only call or fold. If several short all-ins add up to a full raise, the betting is reopened.</li>

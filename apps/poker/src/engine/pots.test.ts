@@ -3,7 +3,7 @@ import { buildPots } from './pots';
 import type { Seat } from './types';
 
 const seat = (id: number, total: number, folded = false): Seat => ({
-  id, name: `S${id}`, human: false, chips: 0, bet: 0, total, hole: [], folded, allIn: false, acted: true, last: null,
+  id, name: `S${id}`, human: false, chips: 0, bet: 0, total, hole: [], folded, allIn: false, acted: true, last: null, place: null,
 });
 
 describe('buildPots', () => {

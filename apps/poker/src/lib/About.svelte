@@ -7,7 +7,7 @@
   <section class="hero">
     <span class="kicker">About and privacy</span>
     <h1>Just for fun, and nothing kept</h1>
-    <p>This is a free game of Texas Hold'em against computer players. There is no real money: chips have no value, and this is not a gambling site.</p>
+    <p>This is a free Texas Hold'em tournament against five computer players: the last one with chips wins. There is no real money: chips have no value, and this is not a gambling site.</p>
     <a class="btn primary" href="/" onclick={follow('game')}>Back to the game</a>
   </section>
 
@@ -22,7 +22,7 @@
     </li>
     <li>
       <h2>Fair play</h2>
-      <p>The deck is shuffled in your browser with its cryptographic random number generator, and every hand uses a fresh, full deck. The computer players are played by the same rules as you and never see your cards or the cards still in the deck.</p>
+      <p>The deck is shuffled in your browser with its cryptographic random number generator, and every hand uses a fresh, full deck. The computer players are played by the same rules as you and never see your cards or the cards still in the deck. They go out when they run out of chips, just as you do.</p>
     </li>
     <li>
       <h2>Sound</h2>

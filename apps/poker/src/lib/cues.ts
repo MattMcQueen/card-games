@@ -1,5 +1,5 @@
 import { reducedMotion } from '@card-games/card-kit/motion';
-import { HUMAN_SEAT, isGameOver, type GameState, type HandRank, type SeatResult } from '../engine';
+import { HUMAN_SEAT, hasWon, isGameOver, type GameState, type HandRank, type SeatResult } from '../engine';
 import { boardDelay, holeDelay, revealDelay } from './motion';
 import { playSound, type SoundName } from './synth';
 
@@ -64,7 +64,7 @@ export function outcomeSounds(mine: SeatResult | undefined): [SoundName, number]
 function settleCues(prev: GameState, next: GameState, { add, reduced }: Timing) {
   const at = reduced ? 0.2 : revealDelay(prev.board.length, next.board.length, next.showdown) / 1000;
   for (const [sound, after] of outcomeSounds(next.results[HUMAN_SEAT])) add(sound, at + after);
-  if (isGameOver(next)) add('gameOver', at + 0.8);
+  if (isGameOver(next)) add(hasWon(next) ? 'bigWin' : 'gameOver', at + 0.8);
 }
 
 /**

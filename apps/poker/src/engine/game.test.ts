@@ -1,7 +1,7 @@
 import { seededRandomInt, type RandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
-import { BIG_BLIND, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
-import { act, isBotTurn, isGameOver, legalActions, newGame, nextHand, potSize } from './game';
+import { BIG_BLIND, HANDS_PER_LEVEL, SEATS, SMALL_BLIND, STARTING_STACK } from './constants';
+import { act, blindsFor, hasWon, isBotTurn, isGameOver, legalActions, newGame, nextHand, potSize } from './game';
 import type { Action, GameState } from './types';
 import { chipsInPlay, gameWithButton, play, rig, withChips } from './testing';
 
@@ -253,6 +253,8 @@ describe('the game', () => {
     expect(g.phase).toBe('settled');
     expect(chips(g, 0)).toBe(0);
     expect(isGameOver(g)).toBe(true);
+    expect(hasWon(g)).toBe(false);
+    expect(g.seats[0]?.place).toBe(6); // the first one out
     expect(() => nextHand(g)).toThrow();
   });
 
@@ -261,11 +263,84 @@ describe('the game', () => {
     expect(isGameOver(g)).toBe(false);
   });
 
-  it('has computer players buy back in when they run low', () => {
-    const g = withChips(start(), { 4: 3 });
-    const next = nextHand(play(g, 'fold', 'fold', 'fold', 'fold', 'fold'), seededRandomInt(9));
-    const bot = next.seats[4];
-    expect((bot?.chips ?? 0) + (bot?.total ?? 0)).toBe(STARTING_STACK);
+});
+
+/** A hand that is over, with the button on seat 0: for setting up the next one. */
+const settled = () => play(start(), 'fold', 'fold', 'fold', 'fold', 'fold');
+
+describe('the blinds', () => {
+  it('start at 5 and 10 and double every ten hands', () => {
+    expect(HANDS_PER_LEVEL).toBe(10);
+    expect(blindsFor(1)).toEqual({ small: SMALL_BLIND, big: BIG_BLIND });
+    expect(blindsFor(10)).toEqual({ small: 5, big: 10 });
+    expect(blindsFor(11)).toEqual({ small: 10, big: 20 });
+    expect(blindsFor(21)).toEqual({ small: 20, big: 40 });
+    expect(blindsFor(41)).toEqual({ small: 80, big: 160 });
+  });
+
+  it('go up with the eleventh hand, and so does the smallest raise', () => {
+    const g = nextHand({ ...settled(), hand: 10 }, seededRandomInt(4));
+    expect(g.hand).toBe(11);
+    expect(g.blinds).toEqual({ small: 10, big: 20 });
+    expect(g.seats[g.smallBlind]?.bet).toBe(10);
+    expect(g.seats[g.bigBlind]?.bet).toBe(20);
+    expect(legalActions(g).minRaiseTo).toBe(40);
+  });
+
+  it('are put in as far as a short stack will go, leaving that player all-in', () => {
+    // The button moves to seat 1, so seat 3 is the big blind; it has only 4 chips.
+    const g = nextHand(withChips(settled(), { 3: 4 }), seededRandomInt(4));
+    expect(g.bigBlind).toBe(3);
+    expect(g.seats[3]).toMatchObject({ bet: 4, allIn: true, chips: 0 });
+    expect(g.currentBet).toBe(BIG_BLIND);
+  });
+});
+
+describe('players running out of chips', () => {
+  it('are out of the game: no cards, no blinds, and the button passes them by', () => {
+    const g = nextHand(withChips(settled(), { 1: 0, 2: 0 }), seededRandomInt(4));
+    for (const out of [1, 2]) expect(g.seats[out]).toMatchObject({ hole: [], folded: true, bet: 0 });
+    expect(g.button).toBe(3);
+    expect([g.smallBlind, g.bigBlind]).toEqual([4, 5]);
+  });
+
+  it('take the places below everyone still in; of two out in one hand, the one who started with more places higher', () => {
+    const g0 = rig(withChips(start(), { 1: 100, 2: 50 }), { 3: 'As Ad', 1: '5c 3h', 2: '8c 6h' }, BOARD);
+    const g = play(g0, 'allin', 'fold', 'fold', 'fold', 'call', 'call');
+    expect(g.phase).toBe('settled');
+    expect([chips(g, 1), chips(g, 2)]).toEqual([0, 0]);
+    expect(g.seats[1]?.place).toBe(5); // started the hand with 105
+    expect(g.seats[2]?.place).toBe(6); // started with 60
+    expect(g.seats.filter((s) => s.place === null)).toHaveLength(4);
+    expect(isGameOver(g)).toBe(false);
+  });
+});
+
+describe('two players left', () => {
+  // Only you (seat 0) and seat 3 have chips; the button moves from seat 0 to seat 3.
+  const headsUp = () => nextHand(withChips(settled(), { 0: 1000, 1: 0, 2: 0, 3: 1000, 4: 0, 5: 0 }), seededRandomInt(4));
+
+  it('has the button post the small blind and act first before the flop', () => {
+    const g = headsUp();
+    expect(g.button).toBe(3);
+    expect([g.smallBlind, g.bigBlind]).toEqual([3, 0]);
+    expect(g.toAct).toBe(3);
+  });
+
+  it('has the big blind act first after the flop', () => {
+    const g = play(headsUp(), 'call', 'check');
+    expect(g.street).toBe('flop');
+    expect(g.toAct).toBe(0);
+  });
+
+  it('ends the game when one of them has all the chips: winning it, if that is you', () => {
+    const g = play(rig(headsUp(), { 0: 'As Ad', 3: '5c 3h' }, BOARD), 'allin', 'call');
+    expect(chips(g, 0)).toBe(STARTING_STACK * 2);
+    expect(g.seats[3]?.place).toBe(2);
+    expect(g.seats[0]?.place).toBe(1);
+    expect(isGameOver(g)).toBe(true);
+    expect(hasWon(g)).toBe(true);
+    expect(() => nextHand(g)).toThrow();
   });
 });
 
@@ -283,6 +358,27 @@ function randomMove(g: GameState, random: RandomInt): Action {
   }
   return { type: legal.canCheck ? 'check' : 'fold' };
 }
+
+describe('a whole game', () => {
+  it('comes to an end as the blinds go up, with the winner holding every chip', () => {
+    const random = seededRandomInt(7);
+    let g = newGame(random);
+    // You play at random too, so this is sometimes won and sometimes lost; either way it finishes.
+    while (!isGameOver(g)) {
+      expect(g.hand).toBeLessThan(400);
+      while (g.phase === 'action') g = act(g, randomMove(g, random));
+      expect(g.blinds).toEqual(blindsFor(g.hand));
+      if (!isGameOver(g)) g = nextHand(g, random);
+    }
+    const left = g.seats.filter((s) => s.chips > 0);
+    if (hasWon(g)) {
+      expect(left).toHaveLength(1);
+      expect(g.seats.map((s) => s.place).sort()).toEqual([1, 2, 3, 4, 5, 6]);
+    } else {
+      expect(g.seats[0]?.place).toBeGreaterThan(left.length);
+    }
+  });
+});
 
 describe('playing at random', () => {
   it('never loses or makes chips, and every hand finishes', () => {

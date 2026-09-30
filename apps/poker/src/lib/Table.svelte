@@ -33,7 +33,7 @@
   <div class="felt">
     <!-- The deck, where dealt cards fly out from. -->
     <div class="deck-spot"><CardPile id="deck" /></div>
-    <p class="info">Hand {game.hand} · Blinds 5/10</p>
+    <p class="info">Hand {game.hand} · Blinds {game.blinds.small}/{game.blinds.big}</p>
 
     <div class="middle">
       <div class="pot" class:empty={!inPlay || pot === 0} aria-label="Pot: {pot}">

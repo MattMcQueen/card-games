@@ -1,5 +1,8 @@
 import {
+  HANDS_PER_LEVEL,
   HUMAN_SEAT,
+  hasWon,
+  isGameOver,
   type ActionKind,
   type Card,
   type GameState,
@@ -37,6 +40,7 @@ export function lastLabel(kind: ActionKind, amount: number): string {
 /** The line under a seat's name: what it won, or what it last did. */
 export function seatStatus(seat: Seat, result: SeatResult | undefined): string {
   if (result && result.net > 0) return `+${result.net}`;
+  if (seat.place !== null && seat.chips === 0) return placeName(seat.place); // out of the game
   if (seat.folded) return 'Fold';
   if (seat.last) return lastLabel(seat.last.kind, seat.last.amount);
   if (seat.allIn) return 'All-in';
@@ -81,8 +85,27 @@ export function entryText(entry: LogEntry, state: GameState): string {
   return `${name} ${verb}${phrase.after?.(entry.amount) ?? ''}`;
 }
 
-/** What screen readers hear: your prompt when it is your turn, otherwise the latest move. */
+/** A finishing place in words: 1st, 2nd, 3rd, 4th... */
+function placeName(place: number): string {
+  return `${place}${['st', 'nd', 'rd'][place - 1] ?? 'th'}`;
+}
+
+/** How the game ended for you: won, or the place you finished in. */
+export function gameOverText(game: GameState): string {
+  if (hasWon(game)) return 'You won! Everyone else is out of chips.';
+  return `Game over: you finished ${placeName(game.seats[HUMAN_SEAT]?.place ?? game.seats.length)} of ${game.seats.length}.`;
+}
+
+/** Before anyone has moved in a hand: the blinds that are in, or that they have just gone up. */
+export function blindsNote(game: GameState): string {
+  const { small, big } = game.blinds;
+  const raised = game.hand > 1 && (game.hand - 1) % HANDS_PER_LEVEL === 0;
+  return raised ? `The blinds are up to ${small}/${big}.` : `Nothing yet: the blinds (${small}/${big}) are in.`;
+}
+
+/** What screen readers hear: your prompt when it is your turn, how the game ended, or the latest move. */
 export function announcementFor(game: GameState, legal: LegalActions, yourTurn: boolean, revealed: boolean): string {
+  if (revealed && isGameOver(game)) return gameOverText(game);
   if (yourTurn) {
     return legal.canCall ? `Your turn. ${legal.toCall} to call.` : 'Your turn. You can check or bet.';
   }

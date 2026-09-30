@@ -11,9 +11,11 @@ engine, no backend), in the card-games repository: see the README at the root fo
 
 ## Rules
 
-The game follows the rules of a UK casino cash game.
+A tournament: the last player with chips wins. It follows the rules of a UK casino cardroom.
 
-- Six seats: you (seat 0) and five computer players. Everyone starts with 1000 chips. Blinds are 5 and 10 and never change; there are no antes.
+- Six seats: you (seat 0) and five computer players. Everyone starts with 1000 chips. There are no antes.
+- The blinds start at 5 and 10 and double every 10 hands (10/20 from hand 11, 20/40 from hand 21, and so on).
+  A player short of a blind puts in what they have and is all-in.
 - No-limit Texas Hold'em. The button moves one seat clockwise each hand; the two seats after it post the small and big blinds.
 - Each hand uses a fresh, cryptographically shuffled 52-card deck. A card is burned before the flop, turn and river.
 - Betting: fold, check, call, bet/raise (any amount up to the whole stack) or all-in.
@@ -26,7 +28,10 @@ The game follows the rules of a UK casino cash game.
   - When everyone left is all-in (or only one player has chips left to act), the rest of the board is dealt with no more betting.
 - At a showdown every remaining hand is turned over. If everyone else folds, the last player wins without showing.
 - No rake or time charge.
-- Computer players who fall below one big blind buy back in for 1000 (as new players sit at a real table). If you lose all your chips the game is over and can be restarted.
+- A player with no chips left is out, and the button moves past their empty seat. Players out in the same hand are placed by
+  the chips they started it with. You win when everyone else is out; if you run out, you are told where you finished,
+  and can start again.
+- With two players left, the button posts the small blind and acts first before the flop, and last after it.
 - Refreshing the page restarts the game.
 
 ## The computer players

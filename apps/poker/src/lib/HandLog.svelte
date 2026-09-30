@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GameState } from '../engine';
-  import { entryText } from './labels';
+  import { blindsNote, entryText } from './labels';
 
   let { game }: { game: GameState } = $props();
 
@@ -17,7 +17,7 @@
 <section class="log" aria-label="Hand history">
   <h2>This hand</h2>
   {#if entries.length === 0}
-    <p class="empty">Nothing yet: the blinds are in.</p>
+    <p class="empty">{blindsNote(game)}</p>
   {:else}
     <ol>
       {#each entries as { entry, text }, i (game.log.length - i)}

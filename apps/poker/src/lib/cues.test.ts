@@ -50,6 +50,15 @@ describe('cuesFor', () => {
     expect(cues).toEqual(expect.arrayContaining(['chip', 'lose', 'sweep', 'gameOver']));
   });
 
+  it('plays the fanfare when you win the game', () => {
+    const settled = play(start(), 'fold', 'fold', 'fold', 'fold', 'fold');
+    const headsUp = nextHand(withChips(settled, { 0: 1000, 1: 0, 2: 0, 3: 1000, 4: 0, 5: 0 }), seededRandomInt(4));
+    const before = play(rig(headsUp, { 0: 'As Ad', 3: '5c 3h' }, BOARD), 'allin');
+    const cues = sounds(before, act(before, { type: 'call' }));
+    expect(cues).toContain('bigWin');
+    expect(cues).not.toContain('gameOver');
+  });
+
   it('is quiet about a fold: just the sweep of the blind you lose', () => {
     const g = gameWithButton(4); // you are the big blind
     const before = play(g, 'raise 30', 'fold', 'fold', 'fold', 'fold');
