@@ -40,10 +40,11 @@ describe('security headers', () => {
 });
 
 describe('caching', () => {
-  it('keeps fingerprinted assets for a year and pages for ten minutes', () => {
+  it('keeps fingerprinted assets for a year, and checks the page for a new version every time', () => {
     const assets = config.routes.find((r) => r.route === '/assets/*') as { headers: Record<string, string> };
     expect(assets?.headers['Cache-Control']).toContain('immutable');
-    expect(headers['Cache-Control']).toBe('public, max-age=600');
+    // So a phone (or a game saved to the Home Screen) never keeps playing an old version after a deploy.
+    expect(headers['Cache-Control']).toBe('no-cache');
   });
 });
 

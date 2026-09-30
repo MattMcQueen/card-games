@@ -1,5 +1,6 @@
 <script lang="ts">
   import { follow } from '@card-games/card-kit/router.svelte';
+  import { build } from '@card-games/card-kit/version';
 </script>
 
 <div class="page">
@@ -42,7 +43,7 @@
     </li>
     <li class="wide">
       <h2>Made by</h2>
-      <p>Matt McQueen, who also writes the <a href="https://www.matt-rarely-writes.co.uk/" rel="noopener" target="_blank">Matt Rarely Writes</a> blog. The code is open source under the MIT licence on <a href="https://github.com/MattMcQueen/card-games/tree/main/apps/poker" rel="noopener" target="_blank">GitHub</a>.</p>
+      <p>Matt McQueen, who also writes the <a href="https://www.matt-rarely-writes.co.uk/" rel="noopener" target="_blank">Matt Rarely Writes</a> blog. The code is open source under the MIT licence on <a href="https://github.com/MattMcQueen/card-games/tree/main/apps/poker" rel="noopener" target="_blank">GitHub</a>. This is version {build}.</p>
     </li>
   </ul>
 </div>

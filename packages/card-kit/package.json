@@ -10,6 +10,7 @@
     "./chips": "./src/chips.ts",
     "./motion": "./src/motion.ts",
     "./synth": "./src/synth.ts",
+    "./version": "./src/version.ts",
     "./vite": "./vite.ts",
     "./CardBack.svelte": {
       "svelte": "./src/CardBack.svelte",

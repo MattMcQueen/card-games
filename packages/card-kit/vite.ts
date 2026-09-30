@@ -56,6 +56,8 @@ function previewHeaders(): Record<string, string> {
 export function gameConfig() {
   return defineConfig({
     plugins: [svelte(), sharedPublic()],
+    // Which build is running, shown on the About page: the commit GitHub Actions built it from.
+    define: { __BUILD__: JSON.stringify(process.env.GITHUB_SHA?.slice(0, 7) ?? 'local') },
     // Keep the card images as real, separately cached files rather than data inside the script.
     build: { assetsInlineLimit: 0 },
     // The port can be chosen with PORT (the preview tool does), which Vite does not read by itself.

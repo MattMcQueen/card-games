@@ -30,11 +30,12 @@
 
 <div class="hole">
   {#each cards as card, i (`${hand}-${i}-${showFaces}`)}
-    <div class="card" class:dim={folded || (showFaces && !!faded && !faded.has(card.rank + card.suit))}>
+    {@const dim = folded || (showFaces && !!faded && !faded.has(card.rank + card.suit))}
+    <div class="card">
       {#if showFaces}
-        <PlayingCard {card} delay={holeDelay(order, i)} still={!ownCards} />
+        <PlayingCard {card} delay={holeDelay(order, i)} still={!ownCards} {dim} />
       {:else}
-        <HiddenCard delay={holeDelay(order, i)} />
+        <HiddenCard delay={holeDelay(order, i)} {dim} />
       {/if}
     </div>
   {/each}
@@ -46,9 +47,6 @@
     justify-content: center;
     min-height: var(--ch);
   }
-  .card {
-    transition: filter 0.3s;
-  }
   .card:not(:first-child) {
     margin-left: calc(var(--cw) * -0.14);
   }
@@ -58,9 +56,5 @@
   .card:nth-child(2) {
     rotate: 4deg;
     translate: 0 -0.15rem;
-  }
-  .card.dim {
-    /* Darkened rather than faded, so the card stays solid and nothing shows through it. */
-    filter: brightness(0.55) grayscale(0.5);
   }
 </style>
