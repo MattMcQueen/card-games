@@ -108,6 +108,19 @@ test.describe('layout', () => {
   // Nothing moves, so the positions can be measured.
   test.use({ reducedMotion: 'reduce' });
 
+  test('your turn’s buttons are in view on a phone without scrolling', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'iphone', 'about the height a phone leaves');
+    await page.goto('/');
+    await mute(page);
+    const fold = page.getByRole('button', { name: /^Fold/ });
+    // Your turn, or (if the others all fold to you) the end of the hand.
+    await expect(fold.or(endOfHand(page))).toBeVisible({ timeout: 60_000 });
+    test.skip(!(await fold.isVisible()), 'the others all folded to you');
+    for (const name of [/^Fold/, /^(Check|Call)/, /^(Bet|Raise|All-in)/]) {
+      await expect(page.locator('.actions').getByRole('button', { name })).toBeInViewport({ ratio: 1 });
+    }
+  });
+
   /** Where everything on the felt is. Things in the same group (a seat and its own cards) may touch. */
   async function measure(page: Page): Promise<Measurements> {
     return page.evaluate(() => {

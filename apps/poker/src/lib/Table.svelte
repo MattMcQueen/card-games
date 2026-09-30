@@ -209,6 +209,10 @@
     .felt {
       aspect-ratio: 5 / 7.4;
       min-height: 0;
+      /* But no taller than the screen leaves room for, after the header and your turn's buttons, so
+         Fold, Call and Raise are in view without scrolling. dvh is the height the browser's toolbars leave. */
+      width: 100%; /* so a shorter table stays full width, rather than narrowing to keep its shape */
+      max-height: calc(100dvh - 15.5rem);
       --cw: clamp(2.4rem, 12cqw, 3.8rem);
       --chip: clamp(1.2rem, 6cqw, 1.7rem);
     }
@@ -225,12 +229,15 @@
       --plate-name: 0.85rem;
       --plate-stack: 1rem;
     }
-    .s0 { --x: 50%; --y: 85%; }
-    .s1 { --x: 17%; --y: 72%; }
+    /* Your seat keeps clear of the bottom edge when a short screen makes the table shorter. */
+    .s0 { --x: 50%; --y: min(85%, calc(100% - 4.6rem)); }
+    /* On a table made shorter by a short screen, these two move down (by as much as it lost, roughly), to
+       stay clear of the board. At full height the first value is the larger, so they are where they were. */
+    .s1 { --x: 17%; --y: max(72%, calc(43.3% + 9rem)); }
     .s2 { --x: 17%; --y: 31%; }
     .s3 { --x: 50%; --y: 14%; }
     .s4 { --x: 83%; --y: 31%; }
-    .s5 { --x: 83%; --y: 72%; }
+    .s5 { --x: 83%; --y: max(72%, calc(43.3% + 9rem)); }
     /* No room for bets beside the seats on a phone: each seat's plate says what it has bet instead. */
     /* The result banner names the winning hand, and there is no room for the others. */
     .slot :global(.hand-name) {

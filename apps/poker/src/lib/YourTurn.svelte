@@ -62,4 +62,17 @@
   .actions .btn.primary {
     min-width: 9rem;
   }
+  /* On a phone Fold, Call and Raise fit on one row, even as "Call 1000" and "Raise to 1000". */
+  @media (max-width: 480px) {
+    .actions {
+      gap: 0.5rem;
+    }
+    .actions .btn {
+      min-width: 5rem;
+      padding-inline: 16px;
+    }
+    .actions .btn.primary {
+      min-width: 7.5rem;
+    }
+  }
 </style>

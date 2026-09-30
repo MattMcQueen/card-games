@@ -63,6 +63,8 @@ export async function isFaceUp(page: Page, card: Locator): Promise<boolean> {
 export const sizes = [
   { name: 'small phone', width: 360, height: 640 },
   { name: 'phone', width: 390, height: 844 },
+  // An iPhone once Safari's or Chrome's toolbars have taken their share of the height.
+  { name: 'phone with toolbars', width: 390, height: 664 },
   { name: 'tablet', width: 768, height: 1024 },
   { name: 'laptop', width: 1280, height: 720 },
   { name: 'desktop', width: 1920, height: 1080 },
