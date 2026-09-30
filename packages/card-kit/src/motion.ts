@@ -42,12 +42,21 @@ export function dealt(node: HTMLElement, { delay = 0, still = false, from = from
   if (still) {
     node.style.setProperty('--deal-duration', `${TURN_DURATION}ms`);
     node.classList.add('card-turn');
-    return;
+  } else {
+    const { dx, dy, tilt } = from(node);
+    node.style.setProperty('--deal-duration', `${DEAL_DURATION}ms`);
+    node.style.setProperty('--deal-dx', `${dx}px`);
+    node.style.setProperty('--deal-dy', `${dy}px`);
+    node.style.setProperty('--deal-tilt', `${tilt}deg`);
+    node.classList.add('card-flight');
   }
-  const { dx, dy, tilt } = from(node);
-  node.style.setProperty('--deal-duration', `${DEAL_DURATION}ms`);
-  node.style.setProperty('--deal-dx', `${dx}px`);
-  node.style.setProperty('--deal-dy', `${dy}px`);
-  node.style.setProperty('--deal-tilt', `${tilt}deg`);
-  node.classList.add('card-flight');
+  // Once it has landed the card goes back to being a plain, still element. A finished animation holding
+  // its last pose keeps the card on a layer of its own, and iOS Safari was seen to lose some of those
+  // (folded cards, which are darkened with a filter, flickered and vanished while others were dealt).
+  // The last pose is the card's resting state, so nothing moves; and if this never ran, it would still look right.
+  const landed = () => {
+    node.classList.remove('card-flight', 'card-turn');
+    node.removeEventListener('animationend', landed);
+  };
+  node.addEventListener('animationend', landed);
 }
