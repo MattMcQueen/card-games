@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { preloadCards } from '@card-games/card-kit/cardImages';
+  import { nav } from '@card-games/card-kit/router.svelte';
+  import Site from '@card-games/card-kit/Site.svelte';
+  import { unlockAudio } from '@card-games/card-kit/sound.svelte';
   import {
     HUMAN_SEAT,
     act,
@@ -12,19 +16,13 @@
     type GameState,
   } from './engine';
   import About from './lib/About.svelte';
-  import { preloadCards } from './lib/cardImages';
   import Controls from './lib/Controls.svelte';
-  import { cuesFor } from './lib/cues';
+  import { cuesFor, playCues } from './lib/cues';
   import HandLog from './lib/HandLog.svelte';
   import HowToPlay from './lib/HowToPlay.svelte';
   import { announcementFor } from './lib/labels';
   import { keyMove, keysActive } from './lib/keys';
   import { animationTime, revealDelay, thinkTime } from './lib/motion';
-  import { nav } from './lib/router.svelte';
-  import SiteHeader from './lib/SiteHeader.svelte';
-  import { playCues, unlockAudio } from './lib/sound.svelte';
-  import Sprites from './lib/Sprites.svelte';
-  import SupportMe from './lib/SupportMe.svelte';
   import Table from './lib/Table.svelte';
 
   // The deck is never edited in place, so the state needs no deep reactivity.
@@ -103,82 +101,23 @@
 </script>
 
 <svelte:window {onkeydown} onpointerdown={preloadCards} />
-<Sprites />
+<Site name="Texas Hold’em" title="Texas Hold'em" {HowToPlay} {About}>
+  <div class="sr-only" role="status" aria-live="polite">{announcement}</div>
 
-<a class="skip" href="#main">Skip to content</a>
-<SiteHeader />
-
-<!-- The game stays in the page while you read How to play, so a hand is never lost. -->
-<main id="main" class="wrap" tabindex="-1">
-  <div class="game" hidden={nav.route !== 'game'}>
-    <h1 class="sr-only">Texas Hold'em</h1>
-    <div class="sr-only" role="status" aria-live="polite">{announcement}</div>
-
-    <Table {game} {boardFrom} {revealed} />
-    <Controls
-      {game}
-      {legal}
-      {yourTurn}
-      {over}
-      showResults={revealed}
-      {amount}
-      onfold={() => play({ type: 'fold' })}
-      oncall={call}
-      onraise={raise}
-      onamount={(to) => (wanted = to)}
-      onnext={() => update(nextHand(game))}
-      onrestart={restart}
-    />
-    <HandLog {game} />
-  </div>
-
-  {#if nav.route === 'how-to-play'}
-    <HowToPlay />
-  {:else if nav.route === 'about'}
-    <About />
-  {/if}
-</main>
-
-<footer class="site-footer">
-  <div class="wrap">
-    <p class="disclosure">Just for fun: chips have no value and no real money is involved. Refreshing the page starts a new game.</p>
-  </div>
-</footer>
-
-<SupportMe />
-
-<style>
-  main {
-    padding-top: 20px;
-    padding-bottom: 32px;
-    min-height: 60vh;
-  }
-  main:focus {
-    outline: none; /* it only takes focus when the page changes */
-  }
-  .game {
-    display: grid;
-    gap: 0.9rem;
-  }
-  .game[hidden] {
-    display: none;
-  }
-
-  .site-footer {
-    padding-bottom: 80px; /* room for the Support me button */
-    font-size: 15px;
-    color: var(--muted);
-  }
-  .site-footer .wrap {
-    padding-top: 24px;
-    border-top: 1px solid var(--line);
-  }
-  .site-footer p {
-    margin: 0 0 10px;
-  }
-  .disclosure {
-    color: var(--fg);
-    font-weight: 600;
-    text-align: center;
-  }
-</style>
+  <Table {game} {boardFrom} {revealed} />
+  <Controls
+    {game}
+    {legal}
+    {yourTurn}
+    {over}
+    showResults={revealed}
+    {amount}
+    onfold={() => play({ type: 'fold' })}
+    oncall={call}
+    onraise={raise}
+    onamount={(to) => (wanted = to)}
+    onnext={() => update(nextHand(game))}
+    onrestart={restart}
+  />
+  <HandLog {game} />
+</Site>

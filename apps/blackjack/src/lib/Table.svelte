@@ -1,9 +1,9 @@
 <script lang="ts">
+  import CardPile from '@card-games/card-kit/CardPile.svelte';
+  import Chip from '@card-games/card-kit/Chip.svelte';
   import type { GameState } from '../engine';
   import BetSpot from './BetSpot.svelte';
-  import Chip from './Chip.svelte';
   import HandView from './HandView.svelte';
-  import Shoe from './Shoe.svelte';
   import TableMarkings from './TableMarkings.svelte';
   import Verdict from './Verdict.svelte';
 
@@ -35,7 +35,8 @@
       <span class="balance-chip"><Chip value={1} /></span>
       <strong>{shownChips}</strong>
     </p>
-    <div class="shoe-corner"><Shoe /></div>
+    <!-- The card shoe, where dealt cards slide out from. -->
+    <div class="shoe-corner"><CardPile scale={0.9} rise={12} /></div>
 
     <div class="zone dealer-zone">
       {#if inRound}
@@ -68,14 +69,6 @@
 </div>
 
 <style>
-  .rail {
-    padding: clamp(0.5rem, 1.6vw, 0.9rem);
-    border-radius: clamp(1.2rem, 4vw, 2.4rem);
-    background: linear-gradient(160deg, var(--wood-1), var(--wood-2) 55%, var(--wood-3));
-    box-shadow:
-      0 10px 30px rgb(0 0 0 / 0.45),
-      inset 0 1px 1px rgb(255 255 255 / 0.25);
-  }
   .felt {
     position: relative;
     display: grid;

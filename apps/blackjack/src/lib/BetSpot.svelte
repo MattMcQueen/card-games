@@ -1,6 +1,7 @@
 <script lang="ts">
+  import ChipStack from '@card-games/card-kit/ChipStack.svelte';
   import { MIN_BET } from '../engine';
-  import ChipStack from './ChipStack.svelte';
+  import { chipSet } from './chips';
 
   /** The bet being built on the betting screen. */
   let { bet }: { bet: number } = $props();
@@ -9,7 +10,7 @@
 <div class="bet-spot" class:empty={bet < MIN_BET}>
   <span class="bet-label">Your bet</span>
   <div class="bet-stack">
-    {#if bet >= MIN_BET}<ChipStack amount={bet} />{/if}
+    {#if bet >= MIN_BET}<ChipStack amount={bet} set={chipSet} />{/if}
   </div>
   <span class="bet-amount">{bet}</span>
 </div>

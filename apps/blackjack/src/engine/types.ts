@@ -1,6 +1,6 @@
 import type { Card } from '@card-games/cards-core';
 
-export { RANKS, SUITS, type Card, type Rank, type Suit } from '@card-games/cards-core';
+export type { Card, Rank } from '@card-games/cards-core';
 
 export type Action =
   | 'hit'

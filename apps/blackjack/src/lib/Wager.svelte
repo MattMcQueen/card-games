@@ -1,6 +1,7 @@
 <script lang="ts">
+  import ChipStack from '@card-games/card-kit/ChipStack.svelte';
   import type { HandResult } from '../engine';
-  import ChipStack from './ChipStack.svelte';
+  import { chipSet } from './chips';
 
   let { bet, result }: { bet: number; result?: HandResult } = $props();
 
@@ -12,9 +13,9 @@
 </script>
 
 <div class="wager">
-  <ChipStack amount={bet} fate={lost ? 'lost' : 'none'} />
+  <ChipStack amount={bet} set={chipSet} fate={lost ? 'lost' : 'none'} />
   {#if winnings > 0}
-    <ChipStack amount={winnings} />
+    <ChipStack amount={winnings} set={chipSet} />
   {/if}
   <span class="amount">{bet}</span>
 </div>

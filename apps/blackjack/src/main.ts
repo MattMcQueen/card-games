@@ -1,5 +1,5 @@
 import { mount } from 'svelte';
-import './app.css';
+import '@card-games/card-kit/app.css';
 import App from './App.svelte';
 
 const target = document.getElementById('app');

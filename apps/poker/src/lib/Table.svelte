@@ -1,8 +1,9 @@
 <script lang="ts">
+  import CardPile from '@card-games/card-kit/CardPile.svelte';
+  import ChipStack from '@card-games/card-kit/ChipStack.svelte';
+  import { chipSet } from './chips';
   import { potSize, type GameState } from '../engine';
   import Board from './Board.svelte';
-  import ChipStack from './ChipStack.svelte';
-  import Deck from './Deck.svelte';
   import SeatView from './SeatView.svelte';
   import Verdict from './Verdict.svelte';
   import { winningCards } from './verdict';
@@ -30,13 +31,14 @@
 <!-- The table: a walnut rail around green felt, with you at the bottom and the others round it. -->
 <div class="rail">
   <div class="felt">
-    <div class="deck-spot"><Deck /></div>
+    <!-- The deck, where dealt cards fly out from. -->
+    <div class="deck-spot"><CardPile id="deck" /></div>
     <p class="info">Hand {game.hand} · Blinds 5/10</p>
 
     <div class="middle">
       <div class="pot" class:empty={!inPlay || pot === 0} aria-label="Pot: {pot}">
         {#if inPlay && pot > 0}
-          <ChipStack amount={pot} />
+          <ChipStack amount={pot} set={chipSet} />
           <strong>Pot {pot}</strong>
         {/if}
         <Verdict {game} {revealed} />
@@ -49,7 +51,7 @@
         <SeatView {seat} {game} {revealed} {settling} {faded} />
         {#if seat.bet > 0 && inPlay}
           <div class="bet">
-            <ChipStack amount={seat.bet} />
+            <ChipStack amount={seat.bet} set={chipSet} />
             <span>{seat.bet}</span>
           </div>
         {/if}
@@ -65,12 +67,6 @@
     width: 100%;
     max-width: max(36rem, calc((100dvh - 17rem) * 16 / 11));
     margin-inline: auto;
-    padding: clamp(0.5rem, 1.6vw, 0.9rem);
-    border-radius: clamp(1.2rem, 4vw, 2.4rem);
-    background: linear-gradient(160deg, var(--wood-1), var(--wood-2) 55%, var(--wood-3));
-    box-shadow:
-      0 10px 30px rgb(0 0 0 / 0.45),
-      inset 0 1px 1px rgb(255 255 255 / 0.25);
   }
   .felt {
     position: relative;

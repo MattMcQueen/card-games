@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { follow } from '@card-games/card-kit/router.svelte';
   import { BIG_BLIND, SEATS, SMALL_BLIND, STARTING_STACK } from '../engine';
-  import { follow } from './router.svelte';
 
   // The hands from best to worst, with an example of each. Suits are written as letters to keep the page plain.
   const hands = [

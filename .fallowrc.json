@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  // Things that run without being imported, so fallow can't see them being used:
+  //  - the card kit's scripts/*.mjs are run by hand to rebuild the card images and sounds,
+  //  - svelte.config.js is read by the Vite plugin and svelte-check,
+  //  - public/ is served as it is (404.html loads 404.css).
+  "entry": ["packages/card-kit/scripts/*.mjs", "**/svelte.config.js", "**/public/**"],
+  // Each game's 404 page loads the 404.css that every site shares, from packages/card-kit/public/;
+  // the Vite set-up (packages/card-kit/vite.ts) puts it next to the page.
+  "ignoreUnresolvedImports": ["/404.css"],
+  // These are devDependencies on purpose. Svelte is bundled into the site by Vite, and the other
+  // two are only used by scripts/build-sounds.mjs, which is run by hand and not part of the site.
+  "ignoreDependencies": ["svelte", "@breezystack/lamejs", "@wasm-audio-decoders/ogg-vorbis"]
+}

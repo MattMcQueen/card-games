@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CardBack from './CardBack.svelte';
-  import { deal } from './motion';
+  import CardBack from '@card-games/card-kit/CardBack.svelte';
+  import { deal } from '@card-games/card-kit/motion';
 
   let { delay = 0 }: { delay?: number } = $props();
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { follow } from './router.svelte';
+  import { follow } from '@card-games/card-kit/router.svelte';
 </script>
 
 <div class="page">

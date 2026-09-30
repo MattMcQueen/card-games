@@ -1,7 +1,7 @@
 <script lang="ts">
+  import Chip from '@card-games/card-kit/Chip.svelte';
   import { MAX_BET, MIN_BET, STARTING_CHIPS, insuranceCost, type Action, type GameState } from '../engine';
-  import Chip from './Chip.svelte';
-  import { DENOMINATIONS } from './chips';
+  import { chipSet } from './chips';
 
   let {
     game,
@@ -50,7 +50,7 @@
   {#if game.phase === 'betting'}
     <p class="hint">Bet {MIN_BET} to {MAX_BET} chips</p>
     <div class="rack">
-      {#each [...DENOMINATIONS].reverse() as value (value)}
+      {#each [...chipSet.values].reverse() as value (value)}
         <button
           type="button"
           class="chip-button"

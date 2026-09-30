@@ -1,6 +1,6 @@
 import type { Card } from '@card-games/cards-core';
 
-export { RANKS, SUITS, type Card, type Rank, type Suit } from '@card-games/cards-core';
+export type { Card, Rank, Suit } from '@card-games/cards-core';
 
 export type Street = 'preflop' | 'flop' | 'turn' | 'river';
 

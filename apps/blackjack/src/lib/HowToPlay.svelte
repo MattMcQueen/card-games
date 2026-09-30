@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { follow } from '@card-games/card-kit/router.svelte';
   import { MAX_BET, MAX_HANDS, MIN_BET, RESHUFFLE_AT, STARTING_CHIPS } from '../engine';
-  import { follow } from './router.svelte';
 </script>
 
 <div class="page">

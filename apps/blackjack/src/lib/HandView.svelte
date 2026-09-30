@@ -1,8 +1,9 @@
 <script lang="ts">
+  import PlayingCard from '@card-games/card-kit/PlayingCard.svelte';
+  import { reducedMotion } from '@card-games/card-kit/motion';
   import { handValue, type Card, type HandResult } from '../engine';
   import { outcomeLabel, signed } from './labels';
-  import { DEAL_GAP, dealerDelay, reducedMotion } from './motion';
-  import PlayingCard from './PlayingCard.svelte';
+  import { DEAL_GAP, dealerDelay, fromShoe } from './motion';
   import Wager from './Wager.svelte';
 
   let {
@@ -54,7 +55,7 @@
 
   <div class="cards" style="--overlap: {overlap}">
     {#each cards as card, i (`${i}-${card.rank}${card.suit}`)}
-      <PlayingCard {card} delay={delayFor(i)} />
+      <PlayingCard {card} delay={delayFor(i)} from={fromShoe} />
     {/each}
   </div>
 

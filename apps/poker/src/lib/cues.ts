@@ -1,6 +1,7 @@
+import { reducedMotion } from '@card-games/card-kit/motion';
 import { HUMAN_SEAT, isGameOver, type GameState, type HandRank, type SeatResult } from '../engine';
-import { boardDelay, holeDelay, reducedMotion, revealDelay } from './motion';
-import type { SoundName } from './synth';
+import { boardDelay, holeDelay, revealDelay } from './motion';
+import { playSound, type SoundName } from './synth';
 
 export interface Cue {
   readonly sound: SoundName;
@@ -83,4 +84,8 @@ export function cuesFor(prev: GameState, next: GameState, reduced = reducedMotio
 
   if (next.phase === 'settled' && prev.phase !== 'settled') settleCues(prev, next, timing);
   return cues;
+}
+
+export function playCues(cues: readonly Cue[]): void {
+  for (const cue of cues) playSound(cue.sound, cue.at);
 }

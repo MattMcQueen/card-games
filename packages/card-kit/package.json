@@ -1,0 +1,59 @@
+{
+  "name": "@card-games/card-kit",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./app.css": "./src/app.css",
+    "./cardImages": "./src/cardImages.ts",
+    "./chips": "./src/chips.ts",
+    "./motion": "./src/motion.ts",
+    "./synth": "./src/synth.ts",
+    "./vite": "./vite.ts",
+    "./CardBack.svelte": {
+      "svelte": "./src/CardBack.svelte",
+      "default": "./src/CardBack.svelte"
+    },
+    "./CardPile.svelte": {
+      "svelte": "./src/CardPile.svelte",
+      "default": "./src/CardPile.svelte"
+    },
+    "./Chip.svelte": {
+      "svelte": "./src/Chip.svelte",
+      "default": "./src/Chip.svelte"
+    },
+    "./ChipStack.svelte": {
+      "svelte": "./src/ChipStack.svelte",
+      "default": "./src/ChipStack.svelte"
+    },
+    "./PlayingCard.svelte": {
+      "svelte": "./src/PlayingCard.svelte",
+      "default": "./src/PlayingCard.svelte"
+    },
+    "./router.svelte": "./src/router.svelte.ts",
+    "./Site.svelte": {
+      "svelte": "./src/Site.svelte",
+      "default": "./src/Site.svelte"
+    },
+    "./sound.svelte": "./src/sound.svelte.ts"
+  },
+  "scripts": {
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@card-games/cards-core": "*"
+  },
+  "devDependencies": {
+    "@breezystack/lamejs": "^1.2.7",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/node": "^24.19.0",
+    "@wasm-audio-decoders/ogg-vorbis": "^0.1.20",
+    "sharp": "^0.35.5",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}

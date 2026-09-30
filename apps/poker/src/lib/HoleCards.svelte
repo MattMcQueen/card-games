@@ -1,8 +1,8 @@
 <script lang="ts">
+  import PlayingCard from '@card-games/card-kit/PlayingCard.svelte';
   import type { Card } from '../engine';
   import HiddenCard from './HiddenCard.svelte';
   import { holeDelay } from './motion';
-  import PlayingCard from './PlayingCard.svelte';
 
   let {
     cards,
