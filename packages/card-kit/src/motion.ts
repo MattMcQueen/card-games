@@ -1,11 +1,11 @@
-import { cubicOut } from 'svelte/easing';
-
 /** Honour the visitor's "reduce motion" setting: no flying cards, no waiting for them. */
 export const reducedMotion =
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** How long a card takes to fly from the deck and turn over, in milliseconds. */
 export const DEAL_DURATION = 620;
+/** How long a card already on the table takes to turn over, in milliseconds. */
+const TURN_DURATION = 450;
 
 /** Where a card flies in from: how far away, in pixels, and how much it is turned as it sets off. */
 export type Origin = (node: Element) => { dx: number; dy: number; tilt: number };
@@ -22,39 +22,32 @@ export const fromDeck: Origin = (node) => {
   };
 };
 
-/** A card flying to its place, face down, with a slight lift mid-flight. `still`: it is already there. */
-export function deal(node: Element, { delay = 0, still = false, from = fromDeck }: { delay?: number; still?: boolean; from?: Origin } = {}) {
-  if (reducedMotion || still) return { duration: 0 };
-  const { dx, dy, tilt } = from(node);
-  return {
-    delay,
-    duration: DEAL_DURATION,
-    easing: cubicOut,
-    css: (t: number, u: number) =>
-      `transform: translate(${u * dx}px, ${u * dy}px) rotate(${u * tilt}deg) scale(${1 + Math.sin(t * Math.PI) * 0.08}); opacity: ${Math.min(1, t * 4)};`,
-  };
+interface DealOptions {
+  delay?: number;
+  /** The card is already on the table and only turns over, such as an opponent's at a showdown. */
+  still?: boolean;
+  from?: Origin;
 }
 
 /**
- * A card turning face up as it lands: it starts showing its back, then flips over. A card that is
- * already on the table (`still`) simply turns over, and quickly. It is done as two transitions, one
- * for each face, that each turn the face and swap it in or out at the halfway point.
+ * Deals a card (a Svelte action, `use:dealt`): it flies to its place face down with a slight lift and,
+ * if it has faces (PlayingCard), turns over as it lands. The movement is plain CSS animations (the
+ * `card-flight` and `card-turn` classes in app.css and PlayingCard.svelte), which the browser plays
+ * out by the clock: a card can never be left stuck part-way, as happened in Safari when each step
+ * waited for the one before to report that it had finished.
  */
-function turn(front: boolean) {
-  return (node: Element, { delay = 0, still = false } = {}) => {
-    if (reducedMotion) return { duration: 0 };
-    return {
-      delay,
-      duration: still ? 450 : DEAL_DURATION,
-      css: (t: number) => {
-        // Face down for the first half of the flight, then a quick turn over.
-        const progress = still ? t : Math.min(1, Math.max(0, (t - 0.45) / 0.5));
-        const angle = (1 - progress) ** 3 * 180; // 180 (back showing) down to 0 (front showing)
-        const showing = front ? angle <= 90 : angle > 90;
-        return `transform: perspective(700px) rotateY(${front ? angle : angle - 180}deg); opacity: ${showing ? 1 : 0};`;
-      },
-    };
-  };
+export function dealt(node: HTMLElement, { delay = 0, still = false, from = fromDeck }: DealOptions = {}) {
+  if (reducedMotion) return;
+  node.style.setProperty('--deal-delay', `${delay}ms`);
+  if (still) {
+    node.style.setProperty('--deal-duration', `${TURN_DURATION}ms`);
+    node.classList.add('card-turn');
+    return;
+  }
+  const { dx, dy, tilt } = from(node);
+  node.style.setProperty('--deal-duration', `${DEAL_DURATION}ms`);
+  node.style.setProperty('--deal-dx', `${dx}px`);
+  node.style.setProperty('--deal-dy', `${dy}px`);
+  node.style.setProperty('--deal-tilt', `${tilt}deg`);
+  node.classList.add('card-flight');
 }
-export const flipUp = turn(true);
-export const flipDown = turn(false);

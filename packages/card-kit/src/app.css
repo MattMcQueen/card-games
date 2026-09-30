@@ -115,6 +115,19 @@ button {
   border-radius: 4px;
 }
 
+/* A card being dealt (motion.ts adds the class and sets where it comes from): it flies to its place face down,
+   turned a little as it sets off, lifting slightly mid-flight, and fades in as it leaves the deck. The curve
+   starts fast and slows as the card lands. */
+.card-flight {
+  animation: card-flight var(--deal-duration) cubic-bezier(0.33, 1, 0.68, 1) var(--deal-delay) both;
+}
+@keyframes card-flight {
+  0% { translate: var(--deal-dx) var(--deal-dy); rotate: var(--deal-tilt); scale: 1; opacity: 0; }
+  9% { opacity: 1; }
+  20.6% { scale: 1.08; } /* the old curve lifted most a fifth of the way in */
+  100% { translate: 0 0; rotate: 0deg; scale: 1; opacity: 1; }
+}
+
 /* The wooden rail round a game's table; each game adds its own size and layout. */
 .rail {
   padding: clamp(0.5rem, 1.6vw, 0.9rem);

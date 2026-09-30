@@ -1,12 +1,12 @@
 <script lang="ts">
   import CardBack from '@card-games/card-kit/CardBack.svelte';
-  import { deal } from '@card-games/card-kit/motion';
+  import { dealt } from '@card-games/card-kit/motion';
 
   let { delay = 0 }: { delay?: number } = $props();
 </script>
 
 <!-- A card face down on the table: an opponent's hole card until it is turned over. -->
-<div class="card" in:deal|global={{ delay }}><CardBack /></div>
+<div class="card" use:dealt={{ delay }}><CardBack /></div>
 
 <style>
   .card {

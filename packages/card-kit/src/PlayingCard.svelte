@@ -3,7 +3,7 @@
   import { cardImage } from './cardImages';
   import { isFaceCard, pipsFor } from './cardLayout';
   import CardBack from './CardBack.svelte';
-  import { deal, flipDown, flipUp, fromDeck, type Origin } from './motion';
+  import { dealt, fromDeck, type Origin } from './motion';
 
   let {
     card,
@@ -30,8 +30,8 @@
 
 <!-- A card flies in face down, from the deck unless `from` says otherwise, and turns over as it lands. `still`
      skips the flight: a card already on the table that is being turned over, such as an opponent's at a showdown. -->
-<div class="card" role="img" aria-label="{card.rank} of {names[card.suit]}" in:deal|global={{ delay, still, from }}>
-<div class="face-up" in:flipUp|global={{ delay, still }}>
+<div class="card" role="img" aria-label="{card.rank} of {names[card.suit]}" use:dealt={{ delay, still, from }}>
+<div class="face-up">
 {#if src}
   <img bind:this={image} {src} alt="" draggable="false" class:ready onload={() => (ready = true)} />
 {/if}
@@ -73,7 +73,7 @@
   {/if}
 </svg>
 </div>
-<div class="face-down" in:flipDown|global={{ delay, still }}><CardBack /></div>
+<div class="face-down"><CardBack /></div>
 </div>
 
 <style>
@@ -85,8 +85,8 @@
     filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
   }
   /* The two faces are stacked. Resting, the front shows and the back is hidden. While a card turns over, each
-     face is swapped in at the halfway point by motion.ts, rather than relying on backface-visibility, which
-     WebKit (Safari, and every browser on iPhone) does not apply reliably. */
+     face is swapped in at the halfway point, rather than relying on backface-visibility, which WebKit
+     (Safari, and every browser on iPhone) does not apply reliably. */
   .face-up,
   .face-down {
     position: absolute;
@@ -94,6 +94,48 @@
   }
   .face-down {
     opacity: 0;
+  }
+  /* Being dealt (motion.ts adds the class): face down for the first part of the flight, then a quick turn
+     over as it lands. Already on the table: just the turn. Each face turns with the same curve, a fast
+     start that slows as it lands, and is swapped at the halfway angle, 90 degrees. */
+  .card:global(.card-flight) > .face-up {
+    animation: turn-up-landing var(--deal-duration) linear var(--deal-delay) both;
+  }
+  .card:global(.card-flight) > .face-down {
+    animation: turn-down-landing var(--deal-duration) linear var(--deal-delay) both;
+  }
+  .card:global(.card-turn) > .face-up {
+    animation: turn-up var(--deal-duration) linear var(--deal-delay) both;
+  }
+  .card:global(.card-turn) > .face-down {
+    animation: turn-down var(--deal-duration) linear var(--deal-delay) both;
+  }
+  /* The turn runs from 45% to 95% of the flight; the curve passes 90 degrees 20.6% of the way through it. */
+  @keyframes turn-up-landing {
+    0% { transform: perspective(700px) rotateY(180deg); opacity: 0; }
+    45% { transform: perspective(700px) rotateY(180deg); animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
+    55.3% { opacity: 0; }
+    55.4% { opacity: 1; }
+    95%, 100% { transform: perspective(700px) rotateY(0deg); opacity: 1; }
+  }
+  @keyframes turn-down-landing {
+    0% { transform: perspective(700px) rotateY(0deg); opacity: 1; }
+    45% { transform: perspective(700px) rotateY(0deg); animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
+    55.3% { opacity: 1; }
+    55.4% { opacity: 0; }
+    95%, 100% { transform: perspective(700px) rotateY(-180deg); opacity: 0; }
+  }
+  @keyframes turn-up {
+    0% { transform: perspective(700px) rotateY(180deg); opacity: 0; animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
+    20.6% { opacity: 0; }
+    20.7% { opacity: 1; }
+    100% { transform: perspective(700px) rotateY(0deg); opacity: 1; }
+  }
+  @keyframes turn-down {
+    0% { transform: perspective(700px) rotateY(0deg); opacity: 1; animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
+    20.6% { opacity: 1; }
+    20.7% { opacity: 0; }
+    100% { transform: perspective(700px) rotateY(-180deg); opacity: 0; }
   }
   img,
   .fallback {

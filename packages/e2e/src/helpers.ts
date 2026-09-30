@@ -22,7 +22,11 @@ export function collectErrors(page: Page): string[] {
 export async function cardsLanded(page: Page, cards: Locator) {
   await expect(async () => {
     const moving = await page.evaluate(
-      () => document.getAnimations().filter((a) => ((a.effect as KeyframeEffect | null)?.target as Element | null)?.closest('.card')).length,
+      () =>
+        document
+          .getAnimations()
+          // A finished animation that holds its final pose (fill: both) has landed.
+          .filter((a) => a.playState !== 'finished' && ((a.effect as KeyframeEffect | null)?.target as Element | null)?.closest('.card')).length,
     );
     expect(moving).toBe(0);
     for (const card of await cards.all()) expect(await card.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
