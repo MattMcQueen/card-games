@@ -1,4 +1,4 @@
-import { collectErrors, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
+import { cardsLanded, collectErrors, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /** The button that ends a round: "Next hand", or "Play again" if the round cost you your last chips. */
@@ -38,13 +38,10 @@ test.describe('with motion', () => {
     await deal(page);
     const cards = page.locator('.felt .card');
     await expect(page.locator('.player-zone .card')).toHaveCount(2);
-    // Once the deal has finished the cards are in place and solid.
-    await page.waitForTimeout(3000);
+    // Once the deal has finished (and, if the round ended at once, the dealer has drawn) the cards are in place.
+    await cardsLanded(page, cards);
     expect(await cards.count()).toBeGreaterThanOrEqual(3);
-    for (const card of await cards.all()) {
-      expect(await card.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
-      expect(await isFaceUp(page, card)).toBe(true);
-    }
+    for (const card of await cards.all()) expect(await isFaceUp(page, card)).toBe(true);
     expect(await isFaceUp(page, page.locator('.shoe-corner .layer').last())).toBe(false);
   });
 
@@ -66,7 +63,7 @@ test.describe('with motion', () => {
     await deal(page);
     await playToTheEnd(page);
     await expect(page.locator('.verdict .banner')).toBeVisible();
-    await page.waitForTimeout(1500);
+    await cardsLanded(page, page.locator('.dealer-zone .card'));
     for (const card of await page.locator('.dealer-zone .card').all()) expect(await isFaceUp(page, card)).toBe(true);
   });
 });
@@ -75,7 +72,7 @@ test.describe('layout', () => {
   // Nothing moves, so the positions can be measured.
   test.use({ reducedMotion: 'reduce' });
 
-  /** Where everything on the felt is. Each hand's own cards and chips may touch it. */
+  /** Where everything on the felt is. A hand's name and its own cards may touch. */
   async function measure(page: Page): Promise<Measurements> {
     return page.evaluate(() => {
       const boxes: Box[] = [];
@@ -89,7 +86,8 @@ test.describe('layout', () => {
       add('result', 'result', document.querySelector('.verdict .banner'));
       document.querySelectorAll('.felt .hand').forEach((hand, i) => {
         const name = hand.getAttribute('aria-label') ?? `hand ${i}`;
-        add(name, name, hand);
+        // What shows, not the hand's padding, which may run under the shoe while the cards stay clear of it.
+        add(`${name} total`, name, hand.querySelector('h2'));
         hand.querySelectorAll('.card').forEach((card, j) => add(`${name} card ${j}`, name, card));
       });
       const f = (document.querySelector('.felt') as Element).getBoundingClientRect();

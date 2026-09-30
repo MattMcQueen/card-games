@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Clicks the speaker button so the tests are silent, as the games start with sound on. */
 export async function mute(page: Page) {
@@ -13,6 +13,20 @@ export function collectErrors(page: Page): string[] {
     if (message.type() === 'error') errors.push(`console: ${message.text()}`);
   });
   return errors;
+}
+
+/**
+ * Waits until every card on the table has landed and turned over: none is moving and each is solid.
+ * How long that takes depends on the hand (a dealer drawing several cards takes longer), so a fixed wait won't do.
+ */
+export async function cardsLanded(page: Page, cards: Locator) {
+  await expect(async () => {
+    const moving = await page.evaluate(
+      () => document.getAnimations().filter((a) => ((a.effect as KeyframeEffect | null)?.target as Element | null)?.closest('.card')).length,
+    );
+    expect(moving).toBe(0);
+    for (const card of await cards.all()) expect(await card.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+  }).toPass({ timeout: 15_000, intervals: [250] });
 }
 
 /**
