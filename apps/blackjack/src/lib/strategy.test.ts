@@ -5,11 +5,15 @@ import { hintFor } from './strategy';
 
 /** The hint's move with the player holding `mine` (two cards) against the dealer's `up`. */
 function advice(mine: [Rank, Rank], up: Rank, chips = 100, ...moves: Action[]): Action | undefined {
+  return hinted(mine, up, chips, ...moves)?.action;
+}
+
+function hinted(mine: [Rank, Rank], up: Rank, chips = 100, ...moves: Action[]) {
   // Deal order is player, dealer, player; filler 2s come after.
   let game = startRound(rigged([mine[0], up, mine[1]], chips), 10);
   if (game.phase === 'insurance') game = act(game, 'decline');
   for (const move of moves) game = act(game, move);
-  return hintFor(game, legalActions(game))?.action;
+  return hintFor(game, legalActions(game));
 }
 
 describe('hintFor', () => {
@@ -61,6 +65,14 @@ describe('hintFor', () => {
     expect(advice(['A', '7'], '5', 15)).toBe('stand');
     // After a hit: 2,3 then a 2 makes 7, then hard 9 against 4 after a second hit.
     expect(advice(['2', '3'], '4', 100, 'hit', 'hit')).toBe('hit');
+  });
+
+  it('names the hand and the dealer card before the rule', () => {
+    expect(hinted(['5', 'J'], '7')?.text).toBe('15 against a 7: hit. Stand on 13 to 16 against 2 to 6, otherwise hit.');
+    expect(hinted(['A', '7'], '8')?.text).toMatch(/^Soft 18 against an 8: stand\. /);
+    expect(hinted(['8', '8'], 'A')?.text).toMatch(/^A pair of 8s against an ace: split\. /);
+    expect(hinted(['10', '2'], 'K')?.text).toMatch(/^12 against a king: hit\. /);
+    expect(hinted(['6', '5'], '6', 15)?.text).toMatch(/^11 against a 6: hit, as you cannot double now\. /);
   });
 
   it('never suggests insurance', () => {
