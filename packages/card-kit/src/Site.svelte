@@ -7,7 +7,7 @@
 
   /**
    * The page every game sits in: the header, the game itself (`children`), its How to play and About pages,
-   * the footer and the Support me button. `name` is the logo; `title`, in tab titles and for screen
+   * and the Support me button. `name` is the logo; `title`, in tab titles and for screen
    * readers, can differ in its typography.
    */
   let {
@@ -38,18 +38,12 @@
   {/if}
 </main>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <p class="disclosure">Just for fun: chips have no value and no real money is involved. Refreshing the page starts a new game.</p>
-  </div>
-</footer>
-
 <SupportMe {name} />
 
 <style>
   main {
     padding-top: 20px;
-    padding-bottom: 32px;
+    padding-bottom: 80px; /* room for the Support me button */
     min-height: 60vh;
   }
   main:focus {
@@ -61,23 +55,5 @@
   }
   .game[hidden] {
     display: none;
-  }
-
-  .site-footer {
-    padding-bottom: 80px; /* room for the Support me button */
-    font-size: 15px;
-    color: var(--muted);
-  }
-  .site-footer .wrap {
-    padding-top: 24px;
-    border-top: 1px solid var(--line);
-  }
-  .site-footer p {
-    margin: 0 0 10px;
-  }
-  .disclosure {
-    color: var(--fg);
-    font-weight: 600;
-    text-align: center;
   }
 </style>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { seededRandomInt } from '@card-games/cards-core';
 import { act, legalActions, nextHand } from '../engine';
 import { gameWithButton, play, rig, withChips } from '../engine/testing';
-import { announcementFor, blindsNote, entryText, gameOverText, lastLabel, seatStatus } from './labels';
+import { announcementFor, entryText, gameOverText, lastLabel, seatStatus } from './labels';
 
 // Seat 0 (you) has the button; seats 1 and 2 post the blinds and seat 3 (Nigel) acts first.
 const start = () => gameWithButton(0);
@@ -83,14 +83,6 @@ describe('an empty seat', () => {
     const headsUp = nextHand(withChips(settled(), { 0: 1000, 1: 0, 2: 0, 3: 1000, 4: 0, 5: 0 }), seededRandomInt(4));
     const won = play(rig(headsUp, { 0: 'As Ad', 3: '5c 3h' }, BOARD), 'allin', 'call');
     expect(seatStatus(won.seats[3]!, undefined)).toBe('2nd');
-  });
-});
-
-describe('blindsNote', () => {
-  it('names the blinds that are in, and says when they have gone up', () => {
-    expect(blindsNote(start())).toBe('Nothing yet: the blinds (5/10) are in.');
-    expect(blindsNote(nextHand({ ...settled(), hand: 10 }, seededRandomInt(4)))).toBe('The blinds are up to 10/20.');
-    expect(blindsNote(nextHand({ ...settled(), hand: 11 }, seededRandomInt(4)))).toBe('Nothing yet: the blinds (10/20) are in.');
   });
 });
 

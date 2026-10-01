@@ -34,7 +34,7 @@
     <li>
       <h2>The blinds</h2>
       <p>The blinds start at {SMALL_BLIND} and {BIG_BLIND} and double every {HANDS_PER_LEVEL} hands: {SMALL_BLIND * 2} and {BIG_BLIND * 2} from hand {HANDS_PER_LEVEL + 1}, {SMALL_BLIND * 4} and {BIG_BLIND * 4} from hand {HANDS_PER_LEVEL * 2 + 1}, and so on. They keep the game moving towards a finish.</p>
-      <p>The hand number and blinds are shown on the table, and "This hand" says when the blinds go up. A player with fewer chips than a blind puts in what they have, and is all-in.</p>
+      <p>The hand number and the blinds are shown in a corner of the table. A player with fewer chips than a blind puts in what they have, and is all-in.</p>
     </li>
     <li>
       <h2>The goal</h2>

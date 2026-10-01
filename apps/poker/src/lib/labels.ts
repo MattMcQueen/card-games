@@ -1,5 +1,4 @@
 import {
-  HANDS_PER_LEVEL,
   HUMAN_SEAT,
   hasWon,
   isGameOver,
@@ -94,13 +93,6 @@ function placeName(place: number): string {
 export function gameOverText(game: GameState): string {
   if (hasWon(game)) return 'You won! Everyone else is out of chips.';
   return `Game over: you finished ${placeName(game.seats[HUMAN_SEAT]?.place ?? game.seats.length)} of ${game.seats.length}.`;
-}
-
-/** Before anyone has moved in a hand: the blinds that are in, or that they have just gone up. */
-export function blindsNote(game: GameState): string {
-  const { small, big } = game.blinds;
-  const raised = game.hand > 1 && (game.hand - 1) % HANDS_PER_LEVEL === 0;
-  return raised ? `The blinds are up to ${small}/${big}.` : `Nothing yet: the blinds (${small}/${big}) are in.`;
 }
 
 /** What screen readers hear: your prompt when it is your turn, how the game ended, or the latest move. */

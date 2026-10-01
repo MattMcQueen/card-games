@@ -18,7 +18,6 @@
   import About from './lib/About.svelte';
   import Controls from './lib/Controls.svelte';
   import { cuesFor, playCues } from './lib/cues';
-  import HandLog from './lib/HandLog.svelte';
   import HowToPlay from './lib/HowToPlay.svelte';
   import { announcementFor } from './lib/labels';
   import { keyMove, keysActive } from './lib/keys';
@@ -119,5 +118,4 @@
     onnext={() => update(nextHand(game))}
     onrestart={restart}
   />
-  <HandLog {game} />
 </Site>

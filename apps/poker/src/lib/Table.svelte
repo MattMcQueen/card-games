@@ -33,7 +33,7 @@
   <div class="felt">
     <!-- The deck, where dealt cards fly out from. -->
     <div class="deck-spot"><CardPile id="deck" /></div>
-    <p class="info">Hand {game.hand} · Blinds {game.blinds.small}/{game.blinds.big}</p>
+    <p class="info"><span>Hand {game.hand}</span><span class="dot"> · </span><span>Blinds {game.blinds.small}/{game.blinds.big}</span></p>
 
     <div class="middle">
       <div class="pot" class:empty={!inPlay || pot === 0} aria-label="Pot: {pot}">
@@ -247,7 +247,16 @@
     .pot :global(.stack) {
       display: none;
     }
+    /* On a phone, in the top-left corner on two short lines, clear of the seat at the top. */
     .info {
+      top: 0.6rem;
+      bottom: auto;
+      left: 0.75rem;
+      display: grid;
+      font-size: 0.62rem;
+      line-height: 1.35;
+    }
+    .info .dot {
       display: none;
     }
     .middle {
@@ -263,6 +272,14 @@
       top: 0.6rem;
       right: 0.6rem;
       --cw: clamp(1.7rem, 8.5cqw, 2.6rem);
+    }
+  }
+
+  /* The narrowest phones (360 pixels): the result banner wraps onto more lines there, so the table may not
+     get quite as short, leaving it room below the seat at the top. */
+  @container (max-width: 340px) {
+    .felt {
+      max-height: max(calc(100dvh - 15.5rem), 27.5rem);
     }
   }
 </style>

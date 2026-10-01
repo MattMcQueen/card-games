@@ -33,7 +33,7 @@ packages/
   `Chip`, `ChipStack` and `chips.ts`;
 - `motion.ts`: a card flying in and turning over, and the visitor's reduced-motion setting;
 - `synth.ts` and `sound.svelte.ts`: the sound engine, the sounds every game has, and mute;
-- `Site.svelte`: the page every game sits in (header, How to play and About pages, footer, Support me button), with the
+- `Site.svelte`: the page every game sits in (header, How to play and About pages, Support me button), with the
   small router that keeps the game running while you read the rules;
 - `app.css`: the colours, fonts and shared styles, matching Brand New (https://brand-new.matt-rarely-writes.co.uk);
 - `public/`: what every site serves as it is: `staticwebapp.config.json` (the Azure security headers, routes and

@@ -142,6 +142,7 @@ test.describe('layout', () => {
       add('deck', 'deck', document.querySelector('#deck'));
       add('pot', 'pot', document.querySelector('.pot > strong'));
       add('board', 'board', document.querySelector('.board'));
+      add('hand and blinds', 'info', document.querySelector('.info'));
       const f = (document.querySelector('.felt') as Element).getBoundingClientRect();
       const page = document.documentElement;
       return {
