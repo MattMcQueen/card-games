@@ -138,6 +138,72 @@ button {
     inset 0 1px 1px rgb(255 255 255 / 0.25);
 }
 
+/* The green felt inside the rail: cloth texture, a soft glow (centred at --felt-glow) and a shadow at the
+   edges. Each game sets its own size and layout. */
+.felt {
+  position: relative;
+  overflow: hidden;
+  border-radius: clamp(0.8rem, 3vw, 1.7rem);
+  color: var(--on-felt);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at var(--felt-glow, 50% 45%), var(--felt-1) 0%, var(--felt-2) 55%, var(--felt-3) 100%);
+  box-shadow: inset 0 0 40px rgb(0 0 0 / 0.55);
+}
+
+/* A player's name plate on the felt. `.turn` lights it up, pulsing, while it is that player's turn. Its size
+   can be set with --plate-w. */
+.name-plate {
+  display: grid;
+  justify-items: center;
+  min-width: var(--plate-w, 6.8rem);
+  padding: 0.25rem 0.6rem 0.3rem;
+  border: 2px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  border-radius: 0.8rem;
+  background: rgb(12 22 18 / 0.78);
+  color: var(--on-felt);
+  line-height: 1.2;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.name-plate.turn {
+  border-color: var(--highlight);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--highlight) 45%, transparent);
+  animation: plate-pulse 1.4s ease-in-out infinite;
+}
+/* `.glow`: the player taking the pot or the trick. */
+.name-plate.glow {
+  border-color: var(--highlight);
+  background: color-mix(in srgb, var(--highlight) 22%, rgb(12 22 18 / 0.85));
+  box-shadow: 0 0 1.2rem color-mix(in srgb, var(--highlight) 60%, transparent);
+}
+@keyframes plate-pulse {
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--highlight) 15%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .name-plate.turn {
+    animation: none;
+  }
+}
+
+/* The line under the table saying whose turn it is, or how the game ended (`.over`), and a space as tall as
+   a button that keeps the page from jumping when the buttons come and go. */
+.table-note {
+  flex-basis: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.table-note.over {
+  color: var(--fg);
+  font-weight: 700;
+}
+.button-space {
+  height: 46px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

@@ -69,8 +69,9 @@
 </div>
 
 <style>
+  /* The felt itself is the kit's (app.css), with its glow a little higher. */
   .felt {
-    position: relative;
+    --felt-glow: 50% 40%;
     display: grid;
     grid-template-rows: auto auto 1fr;
     gap: 0.25rem;
@@ -78,13 +79,6 @@
        so Deal is in view on a phone without scrolling. dvh is the height the browser's toolbars leave. */
     min-height: clamp(20rem, min(62vh, 100dvh - 19.5rem), 36rem);
     padding: 1rem 0.5rem 1rem;
-    border-radius: clamp(0.8rem, 3vw, 1.7rem);
-    overflow: hidden;
-    color: var(--on-felt);
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse at 50% 40%, var(--felt-1) 0%, var(--felt-2) 55%, var(--felt-3) 100%);
-    box-shadow: inset 0 0 40px rgb(0 0 0 / 0.55);
   }
   .balance {
     position: absolute;

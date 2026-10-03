@@ -39,7 +39,7 @@
 <div class="seat" class:you class:folded={seat.folded} class:active class:winner class:out={sittingOut}>
   <HoleCards cards={seat.hole} hand={game.hand} {order} showFaces={showCards} ownCards={you} folded={seat.folded} {faded} />
 
-  <div class="plate">
+  <div class="plate name-plate" class:turn={active} class:glow={winner}>
     <span class="name">
       {#if game.button === seat.id}<span class="badge dealer" title="Dealer button">D</span>{/if}
       {seat.name}
@@ -63,29 +63,7 @@
     gap: 0.25rem;
     transition: opacity 0.3s;
   }
-  .plate {
-    display: grid;
-    justify-items: center;
-    gap: 0;
-    min-width: var(--plate-w, 6.8rem);
-    padding: 0.25rem 0.6rem 0.3rem;
-    border: 2px solid color-mix(in srgb, var(--gold) 30%, transparent);
-    border-radius: 0.8rem;
-    background: rgb(12 22 18 / 0.78);
-    color: var(--on-felt);
-    line-height: 1.2;
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-  }
-  .active .plate {
-    border-color: var(--highlight);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--highlight) 45%, transparent);
-    animation: pulse 1.4s ease-in-out infinite;
-  }
-  .winner .plate {
-    border-color: var(--highlight);
-    background: color-mix(in srgb, var(--highlight) 22%, rgb(12 22 18 / 0.85));
-    box-shadow: 0 0 1.2rem color-mix(in srgb, var(--highlight) 60%, transparent);
-  }
+  /* The plate is the kit's name plate (app.css), lit up on the seat's turn and when it wins. */
   .you .plate {
     border-color: color-mix(in srgb, var(--gold) 65%, transparent);
   }
@@ -163,11 +141,6 @@
     translate: -50% 0;
     animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
   }
-  @keyframes pulse {
-    50% {
-      box-shadow: 0 0 0 5px color-mix(in srgb, var(--highlight) 15%, transparent);
-    }
-  }
   @keyframes pop {
     from {
       transform: scale(0.6);
@@ -175,7 +148,6 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .active .plate,
     .status.won,
     .hand-name {
       animation: none;

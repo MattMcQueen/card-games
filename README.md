@@ -8,6 +8,7 @@ anyone. The sites are funded by a Ko-fi "Support me" button.
 |---|---|---|
 | Blackjack | [`apps/blackjack`](apps/blackjack) | https://blackjack.matt-rarely-writes.co.uk |
 | Texas Hold'em | [`apps/poker`](apps/poker) | https://poker.matt-rarely-writes.co.uk |
+| Hearts | [`apps/hearts`](apps/hearts) | https://hearts.matt-rarely-writes.co.uk |
 
 Each game's README has its rules. This one is about how the games are put together.
 
@@ -20,8 +21,10 @@ a game imports a package straight from `packages/`.
 apps/
   blackjack/        the blackjack game: its rules engine (src/engine), table, controls, pages, sounds and timing
   poker/            the Texas Hold'em game, the same way
+  hearts/           the Hearts game, the same way
 packages/
-  cards-core/       plain TypeScript: Card, Rank and Suit, a deck or shoe, a fair shuffle, secure and seeded random numbers
+  cards-core/       plain TypeScript: Card, Rank and Suit, a deck or shoe, a fair shuffle, secure and seeded random numbers,
+                    and cards from text ("QS 10H") for tests
   card-kit/         what every game looks and sounds like: see below
   e2e/              the Playwright set-up and helpers for each game's browser tests
 ```
@@ -29,13 +32,16 @@ packages/
 `@card-games/card-kit` holds:
 
 - the card artwork (`src/cards`), sounds (`src/sounds`) and fonts (`src/fonts`);
-- `PlayingCard.svelte` (with the flip that works in Safari, see below), `CardBack`, `CardPile` (a deck or shoe),
-  `Chip`, `ChipStack` and `chips.ts`;
+- `PlayingCard.svelte` (with the flip that works in Safari, see below, or flying in already face up), `CardBack`,
+  `CardPile` (a deck or shoe), `Chip`, `ChipStack` and `chips.ts`;
+- `ResultBanner.svelte`, the result of a hand on the table, and `AboutPage.svelte`, the About page, into which a game
+  passes its own details;
 - `motion.ts`: a card flying in and turning over, and the visitor's reduced-motion setting;
 - `synth.ts` and `sound.svelte.ts`: the sound engine, the sounds every game has, and mute;
 - `Site.svelte`: the page every game sits in (header, How to play and About pages, Support me button), with the
   small router that keeps the game running while you read the rules;
-- `app.css`: the colours, fonts and shared styles, matching Brand New (https://brand-new.matt-rarely-writes.co.uk);
+- `app.css`: the colours, fonts and shared styles (the felt, players' name plates, buttons, the pages), matching
+  Brand New (https://brand-new.matt-rarely-writes.co.uk);
 - `public/`: what every site serves as it is: `staticwebapp.config.json` (the Azure security headers, routes and
   caching), the favicon, `robots.txt` and the 404 page's styles;
 - `vite.ts`: the Vite set-up every game uses, which also copies `public/` into each game's build;
@@ -88,7 +94,7 @@ guard it.
 
 Each game is its own Azure Static Web App. GitHub Actions builds it (Azure's own build does not understand npm
 workspaces) and uploads `apps/<game>/dist`: see `.github/workflows/`. A game is tested and redeployed only when it or
-a shared package changes. The apps are `swa-blackjack` and `swa-poker` (Free plan)
+a shared package changes. The apps are `swa-blackjack`, `swa-poker` and `swa-hearts` (Free plan)
 in the `rg-matt-rarely-writes` resource group, with their addresses as CNAME records at Porkbun. Deploying uses
 each app's deploy token, kept as the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN_<GAME>`; without it the
 deploy step only says so.

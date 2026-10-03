@@ -11,6 +11,7 @@
     still = false,
     from = fromDeck,
     dim = false,
+    faceUp = false,
   }: {
     card: Card;
     delay?: number;
@@ -18,6 +19,8 @@
     from?: Origin;
     /** Darkened, such as a card that is not part of the winning hand. */
     dim?: boolean;
+    /** Flies in already face up, without turning over: a card played from your own hand. */
+    faceUp?: boolean;
   } = $props();
 
   const names = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' } as const;
@@ -38,7 +41,7 @@
 
 <!-- A card flies in face down, from the deck unless `from` says otherwise, and turns over as it lands. `still`
      skips the flight: a card already on the table that is being turned over, such as an opponent's at a showdown. -->
-<div class="card" class:dim role="img" aria-label="{card.rank} of {names[card.suit]}" use:dealt={{ delay, still, from }}>
+<div class="card" class:dim class:open={faceUp} role="img" aria-label="{card.rank} of {names[card.suit]}" use:dealt={{ delay, still, from }}>
 <div class="face-up">
 {#if src}
   <img bind:this={image} {src} alt="" draggable="false" class:ready onload={() => (ready = true)} />
@@ -137,6 +140,11 @@
   }
   .card:global(.card-turn) > .face-down {
     animation: turn-down var(--deal-duration) linear var(--deal-delay) both;
+  }
+  /* A card that is already face up as it sets off (`faceUp`) only flies. */
+  .open:global(.card-flight) > .face-up,
+  .open:global(.card-flight) > .face-down {
+    animation: none;
   }
   /* While landing, the turn runs from 45% to 95% of the flight, and the card is edge-on at 55.3%. */
   @keyframes turn-down-landing {

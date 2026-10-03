@@ -12,6 +12,10 @@
     "./synth": "./src/synth.ts",
     "./version": "./src/version.ts",
     "./vite": "./vite.ts",
+    "./AboutPage.svelte": {
+      "svelte": "./src/AboutPage.svelte",
+      "default": "./src/AboutPage.svelte"
+    },
     "./CardBack.svelte": {
       "svelte": "./src/CardBack.svelte",
       "default": "./src/CardBack.svelte"
@@ -31,6 +35,10 @@
     "./PlayingCard.svelte": {
       "svelte": "./src/PlayingCard.svelte",
       "default": "./src/PlayingCard.svelte"
+    },
+    "./ResultBanner.svelte": {
+      "svelte": "./src/ResultBanner.svelte",
+      "default": "./src/ResultBanner.svelte"
     },
     "./router.svelte": "./src/router.svelte.ts",
     "./Site.svelte": {

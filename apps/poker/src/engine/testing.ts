@@ -1,19 +1,10 @@
 import { SEATS } from './constants';
-import { createDeck, seededRandomInt } from '@card-games/cards-core';
+import { createDeck, parseCards as cards, seededRandomInt } from '@card-games/cards-core';
 import { act, legalActions, newGame } from './game';
-import type { Card, GameState, Rank, Suit } from './types';
+import type { Card, GameState } from './types';
 
 /** Cards from text such as "As Kh 10d 2c": rank then suit letter. */
-export function cards(text: string): Card[] {
-  return text
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((token) => ({
-      rank: token.slice(0, -1).toUpperCase() as Rank,
-      suit: token.slice(-1).toUpperCase() as Suit,
-    }));
-}
+export { cards };
 
 /**
  * A new game whose first hand has the button on `button`, so the small blind is the next seat,

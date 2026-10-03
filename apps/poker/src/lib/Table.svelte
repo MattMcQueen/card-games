@@ -68,16 +68,9 @@
     max-width: max(36rem, calc((100dvh - 17rem) * 16 / 11));
     margin-inline: auto;
   }
+  /* The felt itself is the kit's (app.css). */
   .felt {
-    position: relative;
     aspect-ratio: 16 / 11;
-    overflow: hidden;
-    border-radius: clamp(0.8rem, 3vw, 1.7rem);
-    color: var(--on-felt);
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-      radial-gradient(ellipse at 50% 45%, var(--felt-1) 0%, var(--felt-2) 55%, var(--felt-3) 100%);
-    box-shadow: inset 0 0 40px rgb(0 0 0 / 0.55);
 
     /* Sizes for everything on the felt, scaled to the table's width. --ch is set again here, as
        it would otherwise keep the value worked out at the root from the root's --cw. */
