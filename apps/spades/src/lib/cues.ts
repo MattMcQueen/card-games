@@ -1,5 +1,5 @@
 import { reducedMotion } from '@card-games/card-kit/motion';
-import { cue, cuePlayer, dealCues, playedCues, settleTime, type Cue as AnyCue } from '@card-games/card-kit/trickSounds';
+import { cue, cuePlayer, dealCues, playedCues, settledCue, settleTime, type Cue as AnyCue } from '@card-games/card-kit/trickSounds';
 import { hasWon, isGameOver, type GameState } from '../engine';
 import { playSound, type SoundName } from './synth';
 import { bannerFor } from './verdict';
@@ -9,9 +9,7 @@ type Cue = AnyCue<SoundName>;
 /** The end of the hand: a jingle if it went well for you, a groan if not, and whether the game is over. */
 function settleCues(next: GameState, reduced: boolean): Cue[] {
   if (next.phase !== 'settled') return [];
-  const after = settleTime(reduced);
-  if (isGameOver(next)) return [cue(hasWon(next) ? 'bigWin' : 'gameOver', after)];
-  return [cue(bannerFor(next)?.tone === 'win' ? 'win' : 'lose', after)];
+  return [settledCue(isGameOver(next), hasWon(next), bannerFor(next)?.tone === 'win', settleTime(reduced))];
 }
 
 /**

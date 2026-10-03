@@ -10,6 +10,7 @@ anyone. The sites are funded by a Ko-fi "Support me" button.
 | Texas Hold'em | [`apps/poker`](apps/poker) | https://poker.matt-rarely-writes.co.uk |
 | Hearts | [`apps/hearts`](apps/hearts) | https://hearts.matt-rarely-writes.co.uk |
 | Spades | [`apps/spades`](apps/spades) | https://spades.matt-rarely-writes.co.uk |
+| Bridge | [`apps/bridge`](apps/bridge) | not yet live |
 
 Each game's README has its rules. This one is about how the games are put together.
 
@@ -24,10 +25,12 @@ apps/
   poker/            the Texas Hold'em game, the same way
   hearts/           the Hearts game, the same way
   spades/           the Spades game, the same way
+  bridge/           rubber bridge, the same way
 packages/
   cards-core/       plain TypeScript: Card, Rank and Suit, a deck or shoe, a fair shuffle, secure and seeded random numbers,
                     cards from text ("QS 10H") and in words, and the rules every trick-taking game shares (tricks.ts:
-                    dealing, following suit, adding a card to a trick, the computer players' skill; trickTesting.ts)
+                    dealing, following suit, adding a card to a trick and taking it, the computer players' skill;
+                    trickTesting.ts), and the partnerships of Spades and Bridge (partners.ts: names, "Us" and "Them")
   card-kit/         what every game looks and sounds like: see below
   e2e/              the Playwright set-up and helpers for each game's browser tests
 ```
@@ -37,17 +40,21 @@ packages/
 - the card artwork (`src/cards`), sounds (`src/sounds`) and fonts (`src/fonts`);
 - `PlayingCard.svelte` (with the flip that works in Safari, see below, or flying in already face up), `CardBack`,
   `CardPile` (a deck or shoe), `Chip`, `ChipStack` and `chips.ts`;
-- `ResultBanner.svelte`, the result of a hand on the table, and `AboutPage.svelte`, the About page, into which a game
+- `ResultBanner.svelte` (and its `Banner` type, `banner.ts`), the result of a hand on the table, and
+  `AboutPage.svelte` and `HowToPlayPage.svelte`, the frames of the About and How to play pages, into which a game
   passes its own details;
 - `motion.ts`: a card flying in and turning over, and the visitor's reduced-motion setting;
-- for the trick-taking games (Hearts, Spades): `FourSeatTable.svelte` (the table for four, with the computer players'
-  face-down cards in `Fan.svelte` and the trick in `Trick.svelte`), `YourHand.svelte`, `TableControls.svelte` (the
-  line and buttons under the table), `turns.svelte.ts` (the computer players' turns and the taking of each trick, a
-  moment apart), `trickMotion.ts` (their timing) and `trickSounds.ts` (a card played, a trick gathered, the deal);
+- for the trick-taking games (Hearts, Spades, Bridge): `FourSeatTable.svelte` (the table for four, with the computer
+  players' face-down cards in `Fan.svelte`, or one hand face up for Bridge's dummy, and the trick in `Trick.svelte`),
+  `YourHand.svelte`, `TableControls.svelte` (the line and buttons under the table), `turns.svelte.ts` (the computer
+  players' turns and the taking of each trick, a moment apart), `trickMotion.ts` (their timing) and `trickSounds.ts`
+  (a card played, a trick gathered, the deal, the end of a hand); and for the two partnership games (Spades, Bridge),
+  `SeatPlate.svelte` (a player's name plate) and `CornerScores.svelte` (both sides' scores in the corner);
 - `synth.ts` and `sound.svelte.ts`: the sound engine, the sounds every game has, and mute;
 - `Site.svelte`: the page every game sits in (header, How to play and About pages, Support me button), with the
   small router that keeps the game running while you read the rules;
-- `app.css`: the colours, fonts and shared styles (the felt, players' name plates, buttons, the pages), matching
+- `app.css`: the colours, fonts and shared styles (the felt, players' name plates, buttons, cards that are buttons,
+  the pages), matching
   Brand New (https://brand-new.matt-rarely-writes.co.uk);
 - `public/`: what every site serves as it is: `staticwebapp.config.json` (the Azure security headers, routes and
   caching), the favicon, `robots.txt` and the 404 page's styles;

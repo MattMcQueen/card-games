@@ -1,7 +1,7 @@
 <script lang="ts">
   import { preloadCards } from '@card-games/card-kit/cardImages';
   import Site from '@card-games/card-kit/Site.svelte';
-  import { animationTime, fromRect } from '@card-games/card-kit/trickMotion';
+  import { fromRect } from '@card-games/card-kit/trickMotion';
   import { TurnTaker } from '@card-games/card-kit/turns.svelte';
   import { HUMAN_SEAT, chooseBid, collect, decide, isBotTurn, newGame, nextHand, placeBid, playCard, type Card } from './engine';
   import About from './lib/About.svelte';
@@ -14,7 +14,6 @@
   // The computer players bid and play a little apart, and each complete trick waits a moment to be taken.
   const table = new TurnTaker(newGame(), {
     sounds: (prev, next) => playCues(cuesFor(prev, next)),
-    moving: (prev, next) => animationTime(prev, next),
     isBotTurn,
     botMove: (game) => (game.phase === 'bidding' ? placeBid(game, chooseBid(game)) : playCard(game, decide(game))),
     collect,

@@ -1,12 +1,8 @@
+import type { Banner } from '@card-games/card-kit/banner';
 import { HUMAN_SEAT, hasWon, isGameOver, teamOf, type GameState } from '../engine';
 import { gameOverText, signed, score, teamName } from './labels';
 
-export interface Banner {
-  /** Whether it is good news for you. */
-  readonly tone: 'win' | 'lose';
-  readonly main: string;
-  readonly sub: string;
-}
+export type { Banner };
 
 /** The result of a hand once it is scored: how it went for your partnership, or how the game ended. */
 export function bannerFor(game: GameState): Banner | null {

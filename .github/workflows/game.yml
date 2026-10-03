@@ -1,6 +1,6 @@
 name: Game
 
-# The checks for one game, called by that game's own workflow (blackjack.yml, poker.yml, hearts.yml, spades.yml):
+# The checks for one game, called by that game's own workflow (blackjack.yml, poker.yml, hearts.yml, spades.yml, bridge.yml):
 # type-check, unit tests and build for the game and the shared packages, then the game's WebKit tests.
 on:
   workflow_call:

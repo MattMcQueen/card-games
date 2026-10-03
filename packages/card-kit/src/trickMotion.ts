@@ -1,7 +1,7 @@
 import { SEATS } from '@card-games/cards-core';
 import { DEAL_DURATION, reducedMotion, type Origin } from './motion';
 
-// The timing of a trick-taking game (Hearts, Spades): the deal, the computer players' turns and the
+// The timing of a trick-taking game (Hearts, Spades, Bridge): the deal, the computer players' turns and the
 // taking of a trick, and where cards fly from. The cards' flight and turn are in motion.ts.
 
 /** Cards dealt to each player. */

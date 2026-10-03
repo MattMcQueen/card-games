@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./analytics": "./src/analytics.ts",
+    "./banner": "./src/banner.ts",
     "./app.css": "./src/app.css",
     "./cardImages": "./src/cardImages.ts",
     "./chips": "./src/chips.ts",
@@ -33,6 +34,18 @@
     "./ChipStack.svelte": {
       "svelte": "./src/ChipStack.svelte",
       "default": "./src/ChipStack.svelte"
+    },
+    "./CornerScores.svelte": {
+      "svelte": "./src/CornerScores.svelte",
+      "default": "./src/CornerScores.svelte"
+    },
+    "./HowToPlayPage.svelte": {
+      "svelte": "./src/HowToPlayPage.svelte",
+      "default": "./src/HowToPlayPage.svelte"
+    },
+    "./SeatPlate.svelte": {
+      "svelte": "./src/SeatPlate.svelte",
+      "default": "./src/SeatPlate.svelte"
     },
     "./FourSeatTable.svelte": {
       "svelte": "./src/FourSeatTable.svelte",

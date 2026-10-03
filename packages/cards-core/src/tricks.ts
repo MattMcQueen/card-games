@@ -2,7 +2,7 @@ import type { Card, Rank, Suit } from './cards';
 import { createDeck, shuffle, type RandomInt } from './deck';
 import { playedText } from './names';
 
-// What every trick-taking game (Hearts, Spades) has in common: four players round a table, each
+// What every trick-taking game (Hearts, Spades, Bridge) has in common: four players round a table, each
 // playing a card to a trick in turn, with aces high. The rules about which card may be played and
 // who wins a trick stay in each game.
 
@@ -99,6 +99,24 @@ export function addToTrick<P extends Seat>(state: Table<P>, card: Card, legal: r
   if (!legal.some(same(card))) throw new Error(`${state.players[seat]?.name ?? 'Nobody'} may not play ${cardKey(card)} now`);
   const players = state.players.map((p) => (p.id === seat ? { ...p, hand: p.hand.filter((c) => !same(card)(c)) } : p));
   return { players, trick: [...state.trick, { seat, card }] };
+}
+
+/**
+ * The winner of the complete trick takes it, and leads the next: `give` hands the trick to them (a game keeps
+ * a count of tricks, or the cards). The game then adds what else follows, such as scoring the hand.
+ */
+export function takeTrick<P extends Seat>(
+  state: { readonly phase: string; readonly players: readonly P[]; readonly winner: number },
+  give: (player: P) => P,
+) {
+  if (state.phase !== 'collecting') throw new Error('No trick to collect');
+  return {
+    phase: 'playing' as const,
+    players: state.players.map((p) => (p.id === state.winner ? give(p) : p)),
+    trick: [] as Play[],
+    toPlay: state.winner,
+    winner: -1,
+  };
 }
 
 /** A computer player of this `skill` (0 to 1) makes a careless move this time: a less skilled one more often. */

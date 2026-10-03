@@ -11,7 +11,6 @@ export {
   nextHand,
   placeBid,
   playCard,
-  seatsOf,
   teamOf,
   winningTeam,
 } from './game';

@@ -9,6 +9,8 @@ import {
   seatPlayers,
   secureRandomInt,
   sortHand as sortBySuit,
+  takeTrick,
+  teamOf,
   type RandomInt,
 } from '@card-games/cards-core';
 import {
@@ -33,8 +35,7 @@ const SUIT_ORDER: Record<Suit, number> = { C: 0, D: 1, H: 2, S: 3 };
 /** Spades are always trumps. */
 export const isSpade = (card: Card): boolean => card.suit === 'S';
 
-/** The partnership a seat plays for: 0 for you and your partner across the table, 1 for the other two. */
-export const teamOf = (seat: number): number => seat % 2;
+export { teamOf };
 
 /** The seats of a partnership. */
 export const seatsOf = (team: number): number[] => [team, team + 2];
@@ -184,17 +185,11 @@ function score(state: GameState): GameState {
 
 /** The winner of the complete trick takes it and leads the next, or the hand is over and scored. */
 export function collect(state: GameState): GameState {
-  if (state.phase !== 'collecting') throw new Error('No trick to collect');
-  const winner = state.winner;
   const next: GameState = {
     ...state,
-    phase: 'playing',
-    players: state.players.map((p) => (p.id === winner ? { ...p, tricks: p.tricks + 1 } : p)),
-    trick: [],
-    toPlay: winner,
+    ...takeTrick(state, (p) => ({ ...p, tricks: p.tricks + 1 })),
     tricksPlayed: state.tricksPlayed + 1,
     played: [...state.played, ...state.trick.map((p) => p.card)],
-    winner: -1,
   };
   return next.tricksPlayed === HAND_SIZE ? score(next) : next;
 }

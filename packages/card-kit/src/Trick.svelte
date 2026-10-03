@@ -7,19 +7,23 @@
 
   /**
    * The cards of the `trick` being played, which is trick number `round` (such as "3-5", the hand and the trick,
-   * so each trick's cards are new). Once it is complete, `winner` is the seat taking it, or -1.
+   * so each trick's cards are new). Once it is complete, `winner` is the seat taking it, or -1. Cards from your
+   * hand, and from the `open` seat's face-up hand, fly in face up from `yourCardFrom`.
    */
   let {
     trick,
     round,
     winner,
     yourCardFrom,
+    open = -1,
   }: {
     trick: readonly Play[];
     round: string;
     winner: number;
-    /** Where your last card was in your hand: it flies from there. */
+    /** Where the last face-up card played was (in your hand, or the open hand): it flies from there. */
     yourCardFrom: Origin;
+    /** The seat whose cards are face up on the table, or -1. */
+    open?: number;
   } = $props();
 
   // Who takes the trick: still known once it has been collected, when its cards slide across to them.
@@ -47,8 +51,8 @@
       <div class="card" class:winning={winner === seat} out:toWinner>
         <PlayingCard
           {card}
-          from={seat === YOUR_SEAT ? yourCardFrom : fromElement(`fan-${seat}`)}
-          faceUp={seat === YOUR_SEAT}
+          from={seat === YOUR_SEAT || seat === open ? yourCardFrom : fromElement(`fan-${seat}`)}
+          faceUp={seat === YOUR_SEAT || seat === open}
         />
       </div>
     </div>

@@ -10,6 +10,7 @@ import {
   secureRandomInt,
   sortHand as sortBySuit,
   type RandomInt,
+  takeTrick,
 } from '@card-games/cards-core';
 import { BOTS, GAME_OVER_SCORE, HAND_SIZE, HUMAN_SEAT, PASS_SIZE, PLAYERS, POINTS_PER_HAND, QUEEN_POINTS } from './constants';
 import type { Card, Direction, GameState, Play, Player, Suit } from './types';
@@ -202,17 +203,11 @@ function score(state: GameState): GameState {
 
 /** The winner of the complete trick takes it and leads the next, or the hand is over and scored. */
 export function collect(state: GameState): GameState {
-  if (state.phase !== 'collecting') throw new Error('No trick to collect');
-  const winner = state.winner;
   const cards = state.trick.map((p) => p.card);
   const next: GameState = {
     ...state,
-    phase: 'playing',
-    players: state.players.map((p) => (p.id === winner ? { ...p, taken: [...p.taken, ...cards] } : p)),
-    trick: [],
-    toPlay: winner,
+    ...takeTrick(state, (p) => ({ ...p, taken: [...p.taken, ...cards] })),
     tricksPlayed: state.tricksPlayed + 1,
-    winner: -1,
   };
   return next.tricksPlayed === HAND_SIZE ? score(next) : next;
 }

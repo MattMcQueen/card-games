@@ -1,6 +1,7 @@
 <script lang="ts">
   import { winningTeam, type GameState, type TeamResult } from '../engine';
-  import { score, signed, teamLabel, teamName } from './labels';
+  import { teamLabel } from '@card-games/cards-core';
+  import { score, signed, teamName } from './labels';
 
   let { game }: { game: GameState } = $props();
 

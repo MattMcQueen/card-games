@@ -1,17 +1,19 @@
 <script lang="ts">
   import type { Play, Seat } from '@card-games/cards-core';
   import type { Snippet } from 'svelte';
+  import type { Banner } from './banner';
   import Fan from './Fan.svelte';
   import type { Origin } from './motion';
   import ResultBanner from './ResultBanner.svelte';
   import Trick from './Trick.svelte';
 
   /**
-   * The table of a trick-taking game for four (Hearts, Spades): you along the bottom, and the computer players
+   * The table of a trick-taking game for four (Hearts, Spades, Bridge): you along the bottom, and the computer players
    * on your left (seat 1), across (seat 2) and on your right (seat 3), each with their cards face down, and the
    * trick in the middle. The game fills in the rest: `info` in the top-left corner (on one line on a wide table,
    * and a line each on a narrow one), an optional `corner` top right, each seat's name `plate`, the result of
-   * the hand (`banner`) over the trick once it is over, and `yourHand`.
+   * the hand (`banner`) over the trick once it is over, and `yourHand`. In Bridge one computer player's hand
+   * may be `open` (face up, the dummy): the game draws it with `openHand` in place of their face-down cards.
    */
   let {
     game,
@@ -22,6 +24,8 @@
     plate,
     banner,
     yourHand,
+    open = -1,
+    openHand,
   }: {
     /** The hand being played: its number, the players, and the trick (the `tricksPlayed`-th, taken by `winner`). */
     game: {
@@ -33,13 +37,16 @@
     };
     /** Who dealt the hand: the deal starts on their left. */
     dealer: number;
-    /** Where the card you last played was in your hand: it flies to the trick from there. */
+    /** Where the card you last played was in your hand (or the open hand): it flies to the trick from there. */
     yourCardFrom: Origin;
     info: readonly string[];
     corner?: Snippet;
     plate: Snippet<[number]>;
-    banner: { tone: 'win' | 'lose'; main: string; sub: string } | null;
+    banner: Banner | null;
     yourHand: Snippet;
+    /** The seat (1 to 3) whose cards are face up, or -1. */
+    open?: number;
+    openHand?: Snippet<[number]>;
   } = $props();
 </script>
 
@@ -54,13 +61,17 @@
 
     {#each [1, 2, 3] as id (id)}
       <div class="slot s{id}">
-        <Fan seat={id} count={game.players[id]?.hand.length ?? 0} hand={game.hand} {dealer} />
+        {#if id === open && openHand}
+          {@render openHand(id)}
+        {:else}
+          <Fan seat={id} count={game.players[id]?.hand.length ?? 0} hand={game.hand} {dealer} />
+        {/if}
         {@render plate(id)}
       </div>
     {/each}
 
     <div class="middle">
-      <Trick trick={game.trick} round="{game.hand}-{game.tricksPlayed}" winner={game.winner} {yourCardFrom} />
+      <Trick trick={game.trick} round="{game.hand}-{game.tricksPlayed}" winner={game.winner} {yourCardFrom} {open} />
       <div class="verdict-spot">
         {#if banner}<ResultBanner {...banner} />{/if}
       </div>

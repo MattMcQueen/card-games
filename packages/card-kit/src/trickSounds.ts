@@ -2,7 +2,7 @@ import { DEAL_DURATION } from './motion';
 import { burst, sample, type Sound } from './synth';
 import { COLLECT_DURATION, dealDelay } from './trickMotion';
 
-// The sounds of a trick-taking game (Hearts, Spades), and when they play: each game adds its own.
+// The sounds of a trick-taking game (Hearts, Spades, Bridge), and when they play: each game adds its own.
 
 /** A card put down on the trick, and the four cards of a trick swept together. */
 export const trickSounds = {
@@ -32,6 +32,15 @@ export const landingTime = (reduced: boolean): number => (reduced ? 0 : (DEAL_DU
 
 /** When a hand's result can be heard, once its last trick has been taken. */
 export const settleTime = (reduced: boolean): number => (reduced ? 0.2 : COLLECT_DURATION / 1000 + 0.2);
+
+/**
+ * The end of a hand, heard `at` seconds on: the end of the game, won or lost, or else a jingle if the hand
+ * went well for you (`good`) and a groan if not.
+ */
+export function settledCue(over: boolean, won: boolean, good: boolean, at: number): Cue<'bigWin' | 'gameOver' | 'win' | 'lose'> {
+  if (over) return cue(won ? 'bigWin' : 'gameOver', at);
+  return cue(good ? 'win' : 'lose', at);
+}
 
 /** A new hand: the shuffle, then a card sound for each round of the deal. */
 export function dealCues(reduced: boolean): Cue<'shuffle' | 'deal'>[] {

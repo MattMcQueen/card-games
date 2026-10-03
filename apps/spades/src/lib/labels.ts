@@ -1,5 +1,5 @@
-import { SUIT_NAMES, tableAnnouncement, tableNote, type TableTexts } from '@card-games/cards-core';
-import { HUMAN_SEAT, PARTNER_SEAT, hasWon, isGameOver, seatsOf, teamOf, winningTeam, type GameState, type Player } from '../engine';
+import { SUIT_NAMES, tableAnnouncement, tableNote, teamName as partnersName, winnersText, type TableTexts } from '@card-games/cards-core';
+import { HUMAN_SEAT, PARTNER_SEAT, isGameOver, teamOf, winningTeam, type GameState, type Player } from '../engine';
 
 /** A score, with a proper minus sign: "120", "−70". */
 export const score = (n: number): string => (n < 0 ? `−${-n}` : String(n));
@@ -15,13 +15,7 @@ const nameOf = (game: GameState, seat: number) => game.players[seat]?.name ?? ''
 export const bidText = (bid: number): string => (bid === 0 ? 'nil' : String(bid));
 
 /** A partnership's name: "You and Grace", "Omar and Lena". */
-export function teamName(game: GameState, team: number): string {
-  const [a, b] = seatsOf(team).map((s) => nameOf(game, s));
-  return `${a} and ${b}`;
-}
-
-/** The short name in the corner of the table and on the score sheet: "Us" and "Them". */
-export const teamLabel = (team: number): string => (team === teamOf(HUMAN_SEAT) ? 'Us' : 'Them');
+export const teamName = (game: GameState, team: number): string => partnersName(game.players, team);
 
 /** What a player has bid, for the line under the table: "Grace bid 4", "Omar bid nil". */
 const bidBy = (p: Player) => `${p.human ? 'You' : p.name} bid ${bidText(p.bid!)}`;
@@ -69,8 +63,7 @@ export const statusText = (game: GameState): string => tableNote(game, say(game)
 /** How the game ended for you. */
 export function gameOverText(game: GameState): string {
   const winner = winningTeam(game);
-  if (winner === null) return '';
-  return hasWon(game) ? `${teamName(game, winner)} win the game!` : `${teamName(game, winner)} win the game.`;
+  return winner === null ? '' : winnersText(game.players, winner, 'the game');
 }
 
 /** How a hand went for one partnership, in words: "Bid 5, took 6: 51 points". */

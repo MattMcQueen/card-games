@@ -48,13 +48,14 @@
       {@const usable = mode === 'pass' || (mode === 'play' && playable.has(key))}
       <button
         type="button"
-        class="slot"
+        class="slot card-button"
         class:selected={mode === 'pass' && selected.has(key)}
         class:usable
         class:received={received.has(key)}
         disabled={!usable}
         aria-pressed={mode === 'pass' ? selected.has(key) : undefined}
         aria-label={cardName(card)}
+        data-card={key}
         onclick={(event) => onpick(card, event.currentTarget)}
         animate:flip={{ duration: reducedMotion ? 0 : 250 }}
       >
@@ -84,26 +85,12 @@
     /* Room above for a chosen card, which rises. */
     padding-top: calc(var(--ch) * 0.2);
   }
+  /* A card button (app.css), which rises under the pointer when you can pick it. */
   .slot {
-    position: relative;
-    flex: none;
-    width: var(--cw);
-    height: var(--ch);
-    padding: 0;
-    border: 0;
-    border-radius: 8% / 5.7%;
-    background: none;
-    color: inherit;
     transition: translate 0.15s ease-out;
   }
   .slot + .slot {
     margin-left: calc(var(--step) - var(--cw));
-  }
-  .slot:disabled {
-    cursor: default;
-  }
-  .usable {
-    cursor: pointer;
   }
   @media (hover: hover) {
     .usable:hover {
@@ -122,9 +109,5 @@
     border-radius: inherit;
     box-shadow: inset 0 0 0 3px var(--highlight);
     pointer-events: none;
-  }
-  .slot:focus-visible {
-    outline-offset: 1px;
-    z-index: 1;
   }
 </style>
