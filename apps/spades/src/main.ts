@@ -1,3 +1,4 @@
+import { countVisits } from '@card-games/card-kit/analytics';
 import { mount } from 'svelte';
 import '@card-games/card-kit/app.css';
 import App from './App.svelte';
@@ -5,7 +6,8 @@ import App from './App.svelte';
 const target = document.getElementById('app');
 if (!target) throw new Error('Missing #app element');
 
-// Visits are not counted yet: Spades needs its own site in Cloudflare Web Analytics first, and then
-// `countVisits(<its token>)` from '@card-games/card-kit/analytics', as in the other games.
+// This game's site in Cloudflare Web Analytics (see packages/card-kit/src/analytics.ts).
+const ANALYTICS_TOKEN = '1a06e726a4114641aac1b89765ee20f3';
+countVisits(ANALYTICS_TOKEN);
 
 export default mount(App, { target });

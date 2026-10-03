@@ -3,8 +3,8 @@
 A free, single-player game of Spades: you and a computer partner against two computer players, played entirely in
 the browser.
 
-No money is involved. There are no cookies, no login and no advertising. The site is funded by a Ko-fi "Support me"
-button. (Visits are not counted yet: Spades needs its own Cloudflare Web Analytics site first; see `src/main.ts`.)
+No money is involved. There are no cookies, no login and no advertising; visits are counted with Cloudflare Web
+Analytics, which does not identify anyone. The site is funded by a Ko-fi "Support me" button.
 
 Built from the same pieces as the other games (Svelte 5, Vite, TypeScript, a pure and well-tested rules engine, no
 backend), in the card-games repository: see the README at the root for how the games are put together.
