@@ -155,6 +155,31 @@ test.describe('layout', () => {
 
   const problems = async (page: Page) => problemsIn(await measure(page));
 
+  /**
+   * The longest results the banner can show, whatever hand was dealt: the longest name and amount, with the
+   * longest hand name, or with several other winners (the most that are named before they are only counted).
+   */
+  const LONGEST_BANNERS = [
+    ['Margaret wins 4250', 'Full house, sevens full of threes'],
+    ['Margaret wins 4250', 'Margaret and Nigel win too'],
+    ['You win 4250', '3 others win too'],
+  ];
+
+  /** Any overlap with the result banner while it shows each of the longest results in turn. */
+  async function longestBannerProblems(page: Page): Promise<string[]> {
+    const found: string[] = [];
+    for (const [main, sub] of LONGEST_BANNERS) {
+      await page.evaluate(([m, s]) => {
+        const verdict = document.querySelector('.verdict') as Element;
+        (verdict.querySelector('strong') as Element).textContent = m as string;
+        const span = verdict.querySelector('span') ?? verdict.appendChild(document.createElement('span'));
+        span.textContent = s as string;
+      }, [main, sub]);
+      found.push(...(await problems(page)).filter((p) => p.includes('verdict')).map((p) => `"${main}" / "${sub}": ${p}`));
+    }
+    return found;
+  }
+
   for (const { name, width, height } of sizes) {
     test(`nothing overlaps on a ${name} (${width} x ${height}), during a hand and at the result`, async ({ page }, testInfo) => {
       test.skip(testInfo.project.name !== 'webkit', 'the sizes are set here, so one browser project is enough');
@@ -168,6 +193,7 @@ test.describe('layout', () => {
       await playToTheEnd(page);
       await expect(page.locator('.verdict')).toBeVisible();
       expect(await problems(page)).toEqual([]);
+      expect(await longestBannerProblems(page)).toEqual([]);
     });
   }
 });

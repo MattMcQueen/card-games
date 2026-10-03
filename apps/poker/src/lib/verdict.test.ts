@@ -26,11 +26,23 @@ describe('bannerFor', () => {
     expect(bannerFor(g, true)).toEqual({ tone: 'win', main: 'You win 60', sub: 'Pair of Aces' });
   });
 
-  it('gives a clause for each winner when the pots went to different seats', () => {
+  it('names the biggest winner, and who else won, when the pots went to different seats', () => {
     const g0 = rig(start(), { 3: 'As Ad', 4: 'Ks Kd', 5: 'Qs Qd' }, BOARD);
     const stacked = { ...g0, seats: g0.seats.map((s) => ({ ...s, chips: { 3: 100, 4: 300, 5: 1000 }[s.id] ?? s.chips })) };
     const g = play(stacked, 'allin', 'allin', 'call', 'fold', 'fold', 'fold');
-    expect(bannerFor(g, true)?.main).toBe('Nigel wins 315 · Priya wins 400');
+    expect(bannerFor(g, true)).toEqual({ tone: 'lose', main: 'Priya wins 400', sub: 'Nigel wins too' });
+  });
+
+  it('puts you first when you share the pot, and counts the others when there are many', () => {
+    const g = play(start(), 'fold', 'fold', 'fold', 'fold', 'fold');
+    const wins = (list: [number, number][]) => ({
+      ...g,
+      log: [...g.log.filter((e) => e.kind !== 'win'), ...list.map(([seat, amount]) => ({ kind: 'win' as const, seat, amount, street: g.street }))],
+    });
+    expect(bannerFor(wins([[2, 500], [0, 100]]), true)).toMatchObject({ tone: 'win', main: 'You win 100', sub: 'Margaret wins too' });
+    expect(bannerFor(wins([[1, 50], [2, 300], [3, 50], [4, 50]]), true)).toMatchObject({ main: 'Margaret wins 300', sub: '3 others win too' });
+    // A seat that won more than one pot is counted once, with its total.
+    expect(bannerFor(wins([[3, 100], [4, 120], [3, 80]]), true)).toMatchObject({ main: 'Nigel wins 180', sub: 'Priya wins too' });
   });
 });
 
