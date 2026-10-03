@@ -2,7 +2,7 @@ import { seededRandomInt } from '@card-games/cards-core';
 import { describe, expect, it } from 'vitest';
 import { nextHand, playCard, type GameState } from '../engine';
 import { autoplay, cards, playAll, seededGame, withHands } from '../engine/testing';
-import { announcementFor, cardName, directionLabel, gameOverText, passText, trickText, turnText } from './labels';
+import { announcementFor, directionLabel, gameOverText, passText, statusText, trickText, turnText } from './labels';
 import { bannerFor } from './verdict';
 
 /** Hand number `hand` of a seeded game, the earlier ones played out. */
@@ -24,11 +24,6 @@ const table = (): GameState => ({ ...withHands(handNumber(4), DEAL), toPlay: 0 }
 const scores = (g: GameState, list: number[]): GameState => ({ ...g, players: g.players.map((p, i) => ({ ...p, score: list[i]! })) });
 
 describe('labels', () => {
-  it('names cards in words', () => {
-    expect(cardName({ rank: 'Q', suit: 'S' })).toBe('Queen of spades');
-    expect(cardName({ rank: '10', suit: 'H' })).toBe('Ten of hearts');
-  });
-
   it('says where the cards go in each hand', () => {
     expect(passText(handNumber(1))).toBe('Terry, on your left');
     expect(passText(handNumber(2))).toBe('Priya, on your right');
@@ -54,6 +49,12 @@ describe('labels', () => {
     expect(hearts.phase).toBe('collecting');
     expect(trickText(hearts)).toBe('Priya takes the trick (1 point).');
     expect(trickText(last(playAll(table(), '2C 6C 10C'), 'AC'))).toBe('Priya takes the trick.');
+  });
+
+  it('says whose turn it is under the table', () => {
+    const g = table();
+    expect(statusText(g)).toBe(turnText(g));
+    expect(statusText(playAll(g, '2C'))).toBe('Terry is thinking…');
   });
 
   it('tells you how the game ended', () => {

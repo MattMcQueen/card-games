@@ -9,6 +9,7 @@ anyone. The sites are funded by a Ko-fi "Support me" button.
 | Blackjack | [`apps/blackjack`](apps/blackjack) | https://blackjack.matt-rarely-writes.co.uk |
 | Texas Hold'em | [`apps/poker`](apps/poker) | https://poker.matt-rarely-writes.co.uk |
 | Hearts | [`apps/hearts`](apps/hearts) | https://hearts.matt-rarely-writes.co.uk |
+| Spades | [`apps/spades`](apps/spades) | https://spades.matt-rarely-writes.co.uk |
 
 Each game's README has its rules. This one is about how the games are put together.
 
@@ -22,9 +23,11 @@ apps/
   blackjack/        the blackjack game: its rules engine (src/engine), table, controls, pages, sounds and timing
   poker/            the Texas Hold'em game, the same way
   hearts/           the Hearts game, the same way
+  spades/           the Spades game, the same way
 packages/
   cards-core/       plain TypeScript: Card, Rank and Suit, a deck or shoe, a fair shuffle, secure and seeded random numbers,
-                    and cards from text ("QS 10H") for tests
+                    cards from text ("QS 10H") and in words, and the rules every trick-taking game shares (tricks.ts:
+                    dealing, following suit, adding a card to a trick, the computer players' skill; trickTesting.ts)
   card-kit/         what every game looks and sounds like: see below
   e2e/              the Playwright set-up and helpers for each game's browser tests
 ```
@@ -37,6 +40,10 @@ packages/
 - `ResultBanner.svelte`, the result of a hand on the table, and `AboutPage.svelte`, the About page, into which a game
   passes its own details;
 - `motion.ts`: a card flying in and turning over, and the visitor's reduced-motion setting;
+- for the trick-taking games (Hearts, Spades): `FourSeatTable.svelte` (the table for four, with the computer players'
+  face-down cards in `Fan.svelte` and the trick in `Trick.svelte`), `YourHand.svelte`, `TableControls.svelte` (the
+  line and buttons under the table), `turns.svelte.ts` (the computer players' turns and the taking of each trick, a
+  moment apart), `trickMotion.ts` (their timing) and `trickSounds.ts` (a card played, a trick gathered, the deal);
 - `synth.ts` and `sound.svelte.ts`: the sound engine, the sounds every game has, and mute;
 - `Site.svelte`: the page every game sits in (header, How to play and About pages, Support me button), with the
   small router that keeps the game running while you read the rules;
@@ -94,7 +101,7 @@ guard it.
 
 Each game is its own Azure Static Web App. GitHub Actions builds it (Azure's own build does not understand npm
 workspaces) and uploads `apps/<game>/dist`: see `.github/workflows/`. A game is tested and redeployed only when it or
-a shared package changes. The apps are `swa-blackjack`, `swa-poker` and `swa-hearts` (Free plan)
+a shared package changes. The apps are `swa-blackjack`, `swa-poker`, `swa-hearts` and `swa-spades` (Free plan)
 in the `rg-matt-rarely-writes` resource group, with their addresses as CNAME records at Porkbun. Deploying uses
 each app's deploy token, kept as the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN_<GAME>`; without it the
 deploy step only says so.

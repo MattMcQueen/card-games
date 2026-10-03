@@ -1,24 +1,5 @@
-import {
-  HUMAN_SEAT,
-  hasWon,
-  isGameOver,
-  leaders,
-  passTarget,
-  pointsIn,
-  type Card,
-  type GameState,
-  type Rank,
-  type Suit,
-} from '../engine';
-
-const RANK_NAMES: Record<Rank, string> = {
-  A: 'Ace', K: 'King', Q: 'Queen', J: 'Jack', '10': 'Ten', '9': 'Nine', '8': 'Eight', '7': 'Seven', '6': 'Six',
-  '5': 'Five', '4': 'Four', '3': 'Three', '2': 'Two',
-};
-const SUIT_NAMES: Record<Suit, string> = { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' };
-
-/** "Queen of spades". */
-export const cardName = (card: Card): string => `${RANK_NAMES[card.rank]} of ${SUIT_NAMES[card.suit]}`;
+import { SUIT_NAMES, tableAnnouncement, tableNote, type TableTexts } from '@card-games/cards-core';
+import { HUMAN_SEAT, hasWon, isGameOver, leaders, passTarget, pointsIn, type GameState } from '../engine';
 
 const points = (n: number) => `${n} ${n === 1 ? 'point' : 'points'}`;
 const nameOf = (game: GameState, seat: number) => game.players[seat]?.name ?? '';
@@ -54,6 +35,23 @@ export function trickText(game: GameState): string {
   return `${who} the trick${pts > 0 ? ` (${points(pts)})` : ''}.`;
 }
 
+/** What is said about the hand being played: on the line under the table, and to screen readers. */
+function say(game: GameState): TableTexts {
+  return {
+    taking: () => trickText(game),
+    yourTurn: () => turnText(game),
+    waiting: () => `${nameOf(game, game.toPlay)} is thinking…`,
+    settled: () => {
+      const mine = game.result?.points[HUMAN_SEAT] ?? 0;
+      const hand = `This hand: you scored ${points(mine)}. Your total is ${game.players[HUMAN_SEAT]?.score ?? 0}.`;
+      return isGameOver(game) ? `${hand} ${gameOverText(game)}` : hand;
+    },
+  };
+}
+
+/** The line under the table while a hand is played: who took the trick, what you may play, or who is thinking. */
+export const statusText = (game: GameState): string => tableNote(game, say(game));
+
 /** Names joined in a list: "Terry", "Terry and Priya", "Terry, Margaret and Priya". */
 function list(names: string[]): string {
   return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
@@ -69,13 +67,5 @@ export function gameOverText(game: GameState): string {
 /** What screen readers hear: your prompt on your turn, the latest card played, who took a trick, or the hand's result. */
 export function announcementFor(game: GameState, yourTurn: boolean): string {
   if (game.phase === 'passing') return `Choose three cards to pass to ${passText(game)}.`;
-  if (game.phase === 'collecting') return trickText(game);
-  if (game.phase === 'settled') {
-    const mine = game.result?.points[HUMAN_SEAT] ?? 0;
-    const hand = `This hand: you scored ${points(mine)}. Your total is ${game.players[HUMAN_SEAT]?.score ?? 0}.`;
-    return isGameOver(game) ? `${hand} ${gameOverText(game)}` : hand;
-  }
-  const last = game.trick.at(-1);
-  const played = last ? `${last.seat === HUMAN_SEAT ? 'You play' : `${nameOf(game, last.seat)} plays`} the ${cardName(last.card).toLowerCase()}. ` : '';
-  return yourTurn ? `${played}${turnText(game)}` : played;
+  return tableAnnouncement(game, yourTurn, say(game));
 }

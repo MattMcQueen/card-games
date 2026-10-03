@@ -1,14 +1,12 @@
 <script lang="ts">
-  import CardBack from '@card-games/card-kit/CardBack.svelte';
-  import { dealt } from '@card-games/card-kit/motion';
-  import { PLAYERS } from '../engine';
-  import { dealDelay } from './motion';
+  import CardBack from './CardBack.svelte';
+  import { dealt } from './motion';
+  import { dealDelay, dealOrder } from './trickMotion';
 
-  /** `count` face-down cards held by `seat`, dealt afresh for each `hand`. */
-  let { seat, count, hand }: { seat: number; count: number; hand: number } = $props();
+  /** `count` face-down cards held by `seat`, dealt afresh for each `hand` by `dealer`. */
+  let { seat, count, hand, dealer }: { seat: number; count: number; hand: number; dealer: number } = $props();
 
-  /** The seat's place in the deal, which starts on your left. */
-  const order = $derived((seat - 1 + PLAYERS) % PLAYERS);
+  const order = $derived(dealOrder(seat, dealer));
 </script>
 
 <!-- A computer player's hand: its cards face down in a tight fan. Cards it plays fly out from here. -->

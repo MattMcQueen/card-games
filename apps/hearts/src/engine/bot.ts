@@ -1,3 +1,4 @@
+import { botSkills, highest, lowest, quickCard } from '@card-games/cards-core';
 import { BOTS, PASS_SIZE } from './constants';
 import { isQueenOfSpades, legalCards, pointsIn, rankValue, trickWinner } from './game';
 import type { Card, GameState } from './types';
@@ -9,16 +10,9 @@ import type { Card, GameState } from './types';
 /** Points for how much a player wants to be rid of a card. */
 type Weigh = (card: Card) => number;
 
-const highest = (cards: readonly Card[], weigh: Weigh = rankValue) =>
-  cards.reduce((best, c) => (weigh(c) > weigh(best) ? c : best));
-const lowest = (cards: readonly Card[], weigh: Weigh = rankValue) =>
-  cards.reduce((best, c) => (weigh(c) < weigh(best) ? c : best));
-
 const isHighSpade = (card: Card) => card.suit === 'S' && rankValue(card) > 12; // the king or ace
 
-const skillOf = (seat: number) => BOTS[seat - 1]?.skill ?? 1;
-/** The player is careless this time: a less skilled one is more often. */
-const careless = (seat: number, random: () => number) => random() < (1 - skillOf(seat)) * 0.6;
+const { skillOf, careless } = botSkills(BOTS);
 
 /** Every card that has been played in this hand, including the trick on the table. */
 function played(state: GameState): Card[] {
@@ -135,9 +129,8 @@ export function decide(state: GameState, random: () => number = Math.random): Ca
   const seat = state.toPlay;
   const hand = state.players[seat]?.hand ?? [];
   const legal = legalCards(state);
-  if (legal.length === 0) throw new Error('No card to play');
-  if (legal.length === 1) return legal[0] as Card;
-  if (careless(seat, random)) return legal[Math.floor(random() * legal.length)] as Card;
+  const quick = quickCard(legal, skillOf(seat), random);
+  if (quick) return quick;
   const led = state.trick[0]?.card.suit;
   if (!led) return lead(state, hand, legal);
   const following = legal.filter((c) => c.suit === led);

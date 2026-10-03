@@ -1,20 +1,24 @@
-import { createDeck, secureRandomInt, shuffle, type RandomInt } from '@card-games/cards-core';
+import {
+  addToTrick,
+  cardKey,
+  dealHands,
+  following,
+  handToPlay,
+  nextSeat,
+  rankValue,
+  seatPlayers,
+  secureRandomInt,
+  sortHand as sortBySuit,
+  type RandomInt,
+} from '@card-games/cards-core';
 import { BOTS, GAME_OVER_SCORE, HAND_SIZE, HUMAN_SEAT, PASS_SIZE, PLAYERS, POINTS_PER_HAND, QUEEN_POINTS } from './constants';
-import type { Card, Direction, GameState, Play, Player, Rank, Suit } from './types';
+import type { Card, Direction, GameState, Play, Player, Suit } from './types';
 
-const RANK_VALUES: Record<Rank, number> = {
-  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, J: 11, Q: 12, K: 13, A: 14,
-};
+export { cardKey, rankValue };
 /** The order suits are sorted in a hand: alternating black and red, as most players hold them. */
 const SUIT_ORDER: Record<Suit, number> = { C: 0, D: 1, S: 2, H: 3 };
 const DIRECTIONS: readonly Direction[] = ['left', 'right', 'across', 'keep'];
 const SEAT_STEP: Record<Direction, number> = { left: 1, across: 2, right: 3, keep: 0 };
-
-/** A card's rank as a number: 2 to 10, then 11 for a jack up to 14 for an ace (aces are high). */
-export const rankValue = (card: Card): number => RANK_VALUES[card.rank];
-
-/** A card as text, such as "QS" or "10H": the same for equal cards, so it can be a key. */
-export const cardKey = (card: Card): string => card.rank + card.suit;
 
 export const isQueenOfSpades = (card: Card): boolean => card.rank === 'Q' && card.suit === 'S';
 const isTwoOfClubs = (card: Card): boolean => card.rank === '2' && card.suit === 'C';
@@ -25,9 +29,7 @@ export function pointsIn(cards: readonly Card[]): number {
   return cards.reduce((sum, card) => sum + (card.suit === 'H' ? 1 : isQueenOfSpades(card) ? QUEEN_POINTS : 0), 0);
 }
 
-export function sortHand(cards: readonly Card[]): Card[] {
-  return [...cards].sort((a, b) => SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit] || rankValue(a) - rankValue(b));
-}
+export const sortHand = (cards: readonly Card[]): Card[] => sortBySuit(cards, SUIT_ORDER);
 
 /** Which way the cards go in hand number `hand` (from 1): left, right, across, then a hand with no passing. */
 export function directionFor(hand: number): Direction {
@@ -51,10 +53,11 @@ function holderOfTwoOfClubs(players: readonly Player[]): number {
 
 /** Deals hand number `hand` to the players, keeping their scores. */
 function deal(base: Omit<GameState, 'players'>, players: readonly Player[], hand: number, randomInt: RandomInt): GameState {
-  const deck = shuffle(createDeck(), randomInt);
+  // Nobody deals in Hearts, so the cards go round from your left, as if the player on your right dealt.
+  const hands = dealHands(PLAYERS - 1, randomInt);
   const dealt = players.map((p) => ({
     ...p,
-    hand: sortHand(deck.filter((_, i) => i % PLAYERS === p.id)),
+    hand: sortHand(hands[p.id]!),
     received: [],
     taken: [],
   }));
@@ -77,15 +80,7 @@ function deal(base: Omit<GameState, 'players'>, players: readonly Player[], hand
 
 /** A new game: everyone on 0 points, and the first hand dealt. */
 export function newGame(randomInt: RandomInt = secureRandomInt): GameState {
-  const players: Player[] = Array.from({ length: PLAYERS }, (_, id) => ({
-    id,
-    name: id === HUMAN_SEAT ? 'You' : (BOTS[id - 1]?.name ?? `Player ${id}`),
-    human: id === HUMAN_SEAT,
-    hand: [],
-    received: [],
-    taken: [],
-    score: 0,
-  }));
+  const players: Player[] = seatPlayers(BOTS).map((p) => ({ ...p, received: [], taken: [], score: 0 }));
   const blank: Omit<GameState, 'players'> = {
     phase: 'settled',
     hand: 0,
@@ -153,8 +148,8 @@ export function passCards(state: GameState, picks: readonly (readonly Card[])[])
  * if they can. Hearts may not be led until one has been played, unless the leader has only hearts.
  */
 export function legalCards(state: GameState, seat = state.toPlay): Card[] {
-  const hand = state.players[seat]?.hand ?? [];
-  if (state.phase !== 'playing' || seat !== state.toPlay) return [];
+  const hand = handToPlay(state, seat);
+  if (!hand) return [];
   const firstTrick = state.tricksPlayed === 0;
   const led = state.trick[0]?.card.suit;
   if (!led) {
@@ -162,13 +157,12 @@ export function legalCards(state: GameState, seat = state.toPlay): Card[] {
     const notHearts = hand.filter((c) => c.suit !== 'H');
     return state.heartsBroken || notHearts.length === 0 ? [...hand] : notHearts;
   }
-  const following = hand.filter((c) => c.suit === led);
-  if (following.length > 0) return following;
-  if (firstTrick) {
+  const allowed = following(hand, led);
+  if (firstTrick && !allowed.some((c) => c.suit === led)) {
     const safe = hand.filter((c) => !isPointCard(c));
     if (safe.length > 0) return safe;
   }
-  return [...hand];
+  return allowed;
 }
 
 /** The seat that wins a complete trick: whoever played the highest card of the suit led. */
@@ -183,17 +177,10 @@ export function trickWinner(trick: readonly Play[]): number {
 
 /** The seat whose turn it is plays a card. The fourth card completes the trick, ready to be collected. */
 export function playCard(state: GameState, card: Card): GameState {
-  const seat = state.toPlay;
-  if (!legalCards(state).some((c) => cardKey(c) === cardKey(card))) {
-    throw new Error(`${state.players[seat]?.name ?? 'Nobody'} may not play ${cardKey(card)} now`);
-  }
-  const players = state.players.map((p) =>
-    p.id === seat ? { ...p, hand: p.hand.filter((c) => cardKey(c) !== cardKey(card)) } : p,
-  );
-  const trick = [...state.trick, { seat, card }];
+  const { players, trick } = addToTrick(state, card, legalCards(state));
   const heartsBroken = state.heartsBroken || card.suit === 'H';
   if (trick.length < PLAYERS) {
-    return { ...state, players, trick, heartsBroken, toPlay: (seat + 1) % PLAYERS };
+    return { ...state, players, trick, heartsBroken, toPlay: nextSeat(state.toPlay) };
   }
   return { ...state, phase: 'collecting', players, trick, heartsBroken, toPlay: -1, winner: trickWinner(trick) };
 }

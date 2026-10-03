@@ -10,6 +10,8 @@
     "./chips": "./src/chips.ts",
     "./motion": "./src/motion.ts",
     "./synth": "./src/synth.ts",
+    "./trickMotion": "./src/trickMotion.ts",
+    "./trickSounds": "./src/trickSounds.ts",
     "./version": "./src/version.ts",
     "./vite": "./vite.ts",
     "./AboutPage.svelte": {
@@ -32,6 +34,10 @@
       "svelte": "./src/ChipStack.svelte",
       "default": "./src/ChipStack.svelte"
     },
+    "./FourSeatTable.svelte": {
+      "svelte": "./src/FourSeatTable.svelte",
+      "default": "./src/FourSeatTable.svelte"
+    },
     "./PlayingCard.svelte": {
       "svelte": "./src/PlayingCard.svelte",
       "default": "./src/PlayingCard.svelte"
@@ -45,7 +51,16 @@
       "svelte": "./src/Site.svelte",
       "default": "./src/Site.svelte"
     },
-    "./sound.svelte": "./src/sound.svelte.ts"
+    "./sound.svelte": "./src/sound.svelte.ts",
+    "./TableControls.svelte": {
+      "svelte": "./src/TableControls.svelte",
+      "default": "./src/TableControls.svelte"
+    },
+    "./turns.svelte": "./src/turns.svelte.ts",
+    "./YourHand.svelte": {
+      "svelte": "./src/YourHand.svelte",
+      "default": "./src/YourHand.svelte"
+    }
   },
   "scripts": {
     "check": "svelte-check --tsconfig ./tsconfig.json",

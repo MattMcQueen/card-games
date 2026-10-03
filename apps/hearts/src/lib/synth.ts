@@ -1,21 +1,11 @@
-import { burst, commonSounds, notes, sample, soundPlayer, tone, type Sound } from '@card-games/card-kit/synth';
+import { commonSounds, notes, soundPlayer, tone, type Sound } from '@card-games/card-kit/synth';
+import { trickSounds } from '@card-games/card-kit/trickSounds';
 
-// Hearts's sounds: the kit's card sounds and jingles, plus a card played to a trick, a trick being
+// Hearts's sounds: the kit's card sounds and jingles, a card played to a trick and a trick being
 // gathered up, and a chime when hearts are broken.
 const sounds = {
   ...commonSounds,
-
-  // A card put down on the trick: the deal recording, a little softer.
-  play(c, t) {
-    if (sample(c, t, 'deal', 0.7)) return;
-    burst(c, t, { dur: 0.09, from: 1600, to: 4200, q: 0.9, gain: 0.35 });
-  },
-
-  // The four cards of a trick swept together into a pile: a soft slide.
-  gather(c, t) {
-    if (sample(c, t, 'deal', 0.4)) return;
-    burst(c, t, { dur: 0.16, from: 1800, to: 900, q: 0.8, gain: 0.25 });
-  },
+  ...trickSounds,
 
   // Hearts are broken: two soft falling notes.
   broken(c, t) {

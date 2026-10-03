@@ -1,6 +1,6 @@
-import type { Card } from '@card-games/cards-core';
+import type { Card, Play, Seat } from '@card-games/cards-core';
 
-export type { Card, Rank, Suit } from '@card-games/cards-core';
+export type { Card, Play, Suit } from '@card-games/cards-core';
 
 /** Where the cards go before a hand: to the player on your left, on your right, across, or nowhere. */
 export type Direction = 'left' | 'right' | 'across' | 'keep';
@@ -11,18 +11,7 @@ export type Direction = 'left' | 'right' | 'across' | 'keep';
  */
 export type Phase = 'passing' | 'playing' | 'collecting' | 'settled';
 
-/** A card played to a trick, and who played it. */
-export interface Play {
-  readonly seat: number;
-  readonly card: Card;
-}
-
-export interface Player {
-  readonly id: number;
-  readonly name: string;
-  readonly human: boolean;
-  /** The cards in hand, sorted by suit and then rank. */
-  readonly hand: readonly Card[];
+export interface Player extends Seat {
   /** The cards passed to this player at the start of the hand. */
   readonly received: readonly Card[];
   /** Every card in the tricks this player has taken in this hand. */

@@ -1,40 +1,43 @@
 <script lang="ts">
-  import PlayingCard from '@card-games/card-kit/PlayingCard.svelte';
-  import { reducedMotion } from '@card-games/card-kit/motion';
+  import { cardKey, cardName, YOUR_SEAT, type Card } from '@card-games/cards-core';
   import { flip } from 'svelte/animate';
-  import { cardKey, HUMAN_SEAT, PLAYERS, type Card } from '../engine';
-  import { cardName } from './labels';
-  import { dealDelay, fromElement } from './motion';
+  import { reducedMotion } from './motion';
+  import PlayingCard from './PlayingCard.svelte';
+  import { dealDelay, dealOrder, fromElement } from './trickMotion';
+
+  const none: ReadonlySet<string> = new Set();
 
   let {
     cards,
     hand,
+    dealer,
     mode,
     playable,
-    selected,
-    received,
-    receivedFrom,
+    selected = none,
+    received = none,
+    receivedFrom = -1,
     onpick,
   }: {
     cards: readonly Card[];
     /** The number of the hand, so a new hand's cards are dealt afresh. */
     hand: number;
+    /** Who dealt it: the deal starts on their left. */
+    dealer: number;
     /** Choosing cards to pass, choosing one to play, or waiting. */
     mode: 'pass' | 'play' | 'wait';
     /** The cards you may play now (as "QS"). */
     playable: ReadonlySet<string>;
     /** The cards chosen to pass. */
-    selected: ReadonlySet<string>;
+    selected?: ReadonlySet<string>;
     /** The cards passed to you, marked until the first trick is over. */
-    received: ReadonlySet<string>;
+    received?: ReadonlySet<string>;
     /** The seat they came from: they fly in from there. */
-    receivedFrom: number;
+    receivedFrom?: number;
     /** A card was chosen; `from` is the card on the screen. */
     onpick: (card: Card, from: HTMLElement) => void;
   } = $props();
 
-  /** Your place in the deal, which starts on your left. */
-  const order = (HUMAN_SEAT - 1 + PLAYERS) % PLAYERS;
+  const order = $derived(dealOrder(YOUR_SEAT, dealer));
 </script>
 
 <!-- Your cards, fanned along the bottom of the table. They are buttons when you can pick one. -->

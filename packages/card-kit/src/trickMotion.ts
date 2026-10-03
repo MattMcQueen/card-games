@@ -1,9 +1,11 @@
-import { DEAL_DURATION, reducedMotion, type Origin } from '@card-games/card-kit/motion';
-import { HAND_SIZE, PLAYERS, type GameState } from '../engine';
+import { SEATS } from '@card-games/cards-core';
+import { DEAL_DURATION, reducedMotion, type Origin } from './motion';
 
-// How long the deal, the computer players' turns and the taking of a trick last. The cards' flight
-// and turn are the kit's.
+// The timing of a trick-taking game (Hearts, Spades): the deal, the computer players' turns and the
+// taking of a trick, and where cards fly from. The cards' flight and turn are in motion.ts.
 
+/** Cards dealt to each player. */
+const HAND_SIZE = 13;
 /** Between the cards of the deal: one to each player in turn, quickly, as 52 cards are dealt. */
 const DEAL_GAP = 28;
 /** How long a complete trick stays on the table before its winner takes it, so you can see who did. */
@@ -11,23 +13,31 @@ const TRICK_PAUSE = 1100;
 /** How long the cards of a trick take to slide across to its winner. */
 export const COLLECT_DURATION = 420;
 
-/** When a card of the deal lands: `order` is the seat's place in the deal (from your left) and `round` the card. */
+/** When a card of the deal lands: `order` is the seat's place in the deal and `round` the card. */
 export function dealDelay(order: number, round: number): number {
-  return reducedMotion ? 0 : (round * PLAYERS + order) * DEAL_GAP;
+  return reducedMotion ? 0 : (round * SEATS + order) * DEAL_GAP;
 }
 
-/** How long the deal of a new hand takes, until the last card has landed. */
-function dealTime(): number {
-  return reducedMotion ? 0 : dealDelay(PLAYERS - 1, HAND_SIZE - 1) + DEAL_DURATION;
+/** A seat's place in the deal, which starts on the dealer's left. */
+export const dealOrder = (seat: number, dealer: number): number => (seat - dealer - 1 + SEATS * 2) % SEATS;
+
+/** What the timing needs to know of a game's state. */
+interface Moving {
+  /** The number of the hand. */
+  readonly hand: number;
+  readonly trick: readonly unknown[];
+  readonly phase: string;
 }
 
-/** How long the change from `prev` to `next` keeps cards moving, in milliseconds. */
-export function animationTime(prev: GameState, next: GameState): number {
+/**
+ * How long the change from `prev` to `next` keeps cards moving, in milliseconds: a new deal, a card
+ * landing on the trick (or `landing`, cards landing in a hand), or a trick being taken.
+ */
+export function animationTime(prev: Moving, next: Moving, landing = false): number {
   if (reducedMotion) return 0;
-  if (next.hand !== prev.hand) return dealTime();
-  if (next.trick.length > prev.trick.length || (prev.phase === 'passing' && next.phase !== 'passing')) return DEAL_DURATION;
-  if (prev.phase === 'collecting') return COLLECT_DURATION;
-  return 0;
+  if (next.hand !== prev.hand) return dealDelay(SEATS - 1, HAND_SIZE - 1) + DEAL_DURATION;
+  if (landing || next.trick.length > prev.trick.length) return DEAL_DURATION;
+  return prev.phase === 'collecting' ? COLLECT_DURATION : 0;
 }
 
 /** How long a computer player takes over its card: a beat you can follow, after any cards still landing. `luck` (0 to 1) varies it. */

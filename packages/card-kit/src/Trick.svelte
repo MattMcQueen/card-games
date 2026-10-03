@@ -1,16 +1,31 @@
 <script lang="ts">
-  import PlayingCard from '@card-games/card-kit/PlayingCard.svelte';
-  import { reducedMotion, type Origin } from '@card-games/card-kit/motion';
+  import { YOUR_SEAT, type Play } from '@card-games/cards-core';
   import { cubicIn } from 'svelte/easing';
-  import { HUMAN_SEAT, type GameState } from '../engine';
-  import { COLLECT_DURATION, fromElement, offset } from './motion';
+  import { reducedMotion, type Origin } from './motion';
+  import PlayingCard from './PlayingCard.svelte';
+  import { COLLECT_DURATION, fromElement, offset } from './trickMotion';
 
-  let { game, yourCardFrom }: { game: GameState; /** Where your last card was in your hand: it flies from there. */ yourCardFrom: Origin } = $props();
+  /**
+   * The cards of the `trick` being played, which is trick number `round` (such as "3-5", the hand and the trick,
+   * so each trick's cards are new). Once it is complete, `winner` is the seat taking it, or -1.
+   */
+  let {
+    trick,
+    round,
+    winner,
+    yourCardFrom,
+  }: {
+    trick: readonly Play[];
+    round: string;
+    winner: number;
+    /** Where your last card was in your hand: it flies from there. */
+    yourCardFrom: Origin;
+  } = $props();
 
   // Who takes the trick: still known once it has been collected, when its cards slide across to them.
   let takenBy = -1;
   $effect.pre(() => {
-    if (game.winner >= 0) takenBy = game.winner;
+    if (winner >= 0) takenBy = winner;
   });
 
   /** The cards of a collected trick slide to the name plate of whoever took them, shrinking as they go. */
@@ -27,13 +42,13 @@
 
 <!-- The trick in the middle of the table: each card in front of the player who played it. -->
 <div class="trick" role="group" aria-label="The trick">
-  {#each game.trick as { seat, card } (`${game.hand}-${game.tricksPlayed}-${seat}`)}
+  {#each trick as { seat, card } (`${round}-${seat}`)}
     <div class="spot p{seat}">
-      <div class="card" class:winning={game.winner === seat} out:toWinner>
+      <div class="card" class:winning={winner === seat} out:toWinner>
         <PlayingCard
           {card}
-          from={seat === HUMAN_SEAT ? yourCardFrom : fromElement(`fan-${seat}`)}
-          faceUp={seat === HUMAN_SEAT}
+          from={seat === YOUR_SEAT ? yourCardFrom : fromElement(`fan-${seat}`)}
+          faceUp={seat === YOUR_SEAT}
         />
       </div>
     </div>

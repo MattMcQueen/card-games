@@ -45,9 +45,11 @@ Over 2,000 bot-only hands, points per hand were about 7.9 for Terry, 7.1 for Mar
   A complete trick waits in the `collecting` phase until `collect` hands it to its winner, so the table can show it.
   Tests include rigged hands for the first-trick and breaking-hearts rules and shooting the moon, and whole games played
   by the computer that check every hand scores 26 points (or 78 with a moon).
-- `src/lib/` - the Svelte components, sounds (`cues.ts` decides which sound goes with a change of state) and timing (`motion.ts`).
-- `src/App.svelte` - holds the game state, takes the computer players' turns a little apart so you can follow them, and
-  leaves each complete trick on the table for a moment before it is taken.
+- `src/lib/` - the Svelte components and sounds (`cues.ts` decides which sound goes with a change of state). The table,
+  your hand, the controls' frame and the timing are shared with Spades, in `packages/card-kit`, and the parts of the
+  rules every trick-taking game has are in `packages/cards-core`.
+- `src/App.svelte` - holds the game state, which the kit's `TurnTaker` moves on: it takes the computer players' turns a
+  little apart so you can follow them, and leaves each complete trick on the table for a moment before it is taken.
 
 ## Commands
 
