@@ -47,6 +47,10 @@
       "svelte": "./src/SeatPlate.svelte",
       "default": "./src/SeatPlate.svelte"
     },
+    "./Fan.svelte": {
+      "svelte": "./src/Fan.svelte",
+      "default": "./src/Fan.svelte"
+    },
     "./FourSeatTable.svelte": {
       "svelte": "./src/FourSeatTable.svelte",
       "default": "./src/FourSeatTable.svelte"
@@ -65,11 +69,20 @@
       "default": "./src/Site.svelte"
     },
     "./sound.svelte": "./src/sound.svelte.ts",
+    "./TableInfo.svelte": {
+      "svelte": "./src/TableInfo.svelte",
+      "default": "./src/TableInfo.svelte"
+    },
     "./TableControls.svelte": {
       "svelte": "./src/TableControls.svelte",
       "default": "./src/TableControls.svelte"
     },
     "./turns.svelte": "./src/turns.svelte.ts",
+    "./choice.svelte": "./src/choice.svelte.ts",
+    "./YourSeat.svelte": {
+      "svelte": "./src/YourSeat.svelte",
+      "default": "./src/YourSeat.svelte"
+    },
     "./YourHand.svelte": {
       "svelte": "./src/YourHand.svelte",
       "default": "./src/YourHand.svelte"

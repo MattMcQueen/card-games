@@ -1,8 +1,9 @@
 import { SEATS } from '@card-games/cards-core';
 import { DEAL_DURATION, reducedMotion, type Origin } from './motion';
 
-// The timing of a trick-taking game (Hearts, Spades, Bridge): the deal, the computer players' turns and the
-// taking of a trick, and where cards fly from. The cards' flight and turn are in motion.ts.
+// The timing of a card game played in turns (Hearts, Spades, Bridge, Cribbage): the deal, the computer players'
+// turns and the taking of a trick, and where cards fly from. The cards' flight and turn are in motion.ts. The deal
+// is to four players unless a game says how many `seats` its table has.
 
 /** Cards dealt to each player. */
 const HAND_SIZE = 13;
@@ -14,18 +15,22 @@ const TRICK_PAUSE = 1100;
 export const COLLECT_DURATION = 420;
 
 /** When a card of the deal lands: `order` is the seat's place in the deal and `round` the card. */
-export function dealDelay(order: number, round: number): number {
-  return reducedMotion ? 0 : (round * SEATS + order) * DEAL_GAP;
+export function dealDelay(order: number, round: number, seats = SEATS): number {
+  return reducedMotion ? 0 : (round * seats + order) * DEAL_GAP;
 }
 
 /** A seat's place in the deal, which starts on the dealer's left. */
-export const dealOrder = (seat: number, dealer: number): number => (seat - dealer - 1 + SEATS * 2) % SEATS;
+export const dealOrder = (seat: number, dealer: number, seats = SEATS): number => (seat - dealer - 1 + seats * 2) % seats;
+
+/** The cards played to the trick so far, if the game has a trick. */
+const played = (state: Moving): number => state.trick?.length ?? 0;
 
 /** What the timing needs to know of a game's state. */
 interface Moving {
   /** The number of the hand. */
   readonly hand: number;
-  readonly trick: readonly unknown[];
+  /** The cards played to the trick so far, in a trick-taking game. */
+  readonly trick?: readonly unknown[];
   readonly phase: string;
 }
 
@@ -36,7 +41,7 @@ interface Moving {
 export function animationTime(prev: Moving, next: Moving, landing = false): number {
   if (reducedMotion) return 0;
   if (next.hand !== prev.hand) return dealDelay(SEATS - 1, HAND_SIZE - 1) + DEAL_DURATION;
-  if (landing || next.trick.length > prev.trick.length) return DEAL_DURATION;
+  if (landing || played(next) > played(prev)) return DEAL_DURATION;
   return prev.phase === 'collecting' ? COLLECT_DURATION : 0;
 }
 

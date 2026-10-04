@@ -42,10 +42,10 @@ export function settledCue(over: boolean, won: boolean, good: boolean, at: numbe
   return cue(good ? 'win' : 'lose', at);
 }
 
-/** A new hand: the shuffle, then a card sound for each round of the deal. */
-export function dealCues(reduced: boolean): Cue<'shuffle' | 'deal'>[] {
-  const rounds = Array.from({ length: 13 }, (_, round) => cue('deal' as const, reduced ? round * 0.05 : 0.9 + dealDelay(0, round) / 1000));
-  return [cue('shuffle'), ...rounds];
+/** A new hand: the shuffle, then a card sound for each round of the deal (`rounds` cards each, to `seats` players). */
+export function dealCues(reduced: boolean, rounds = 13, seats?: number): Cue<'shuffle' | 'deal'>[] {
+  const each = Array.from({ length: rounds }, (_, round) => cue('deal' as const, reduced ? round * 0.05 : 0.9 + dealDelay(0, round, seats) / 1000));
+  return [cue('shuffle'), ...each];
 }
 
 /** A card played to the trick, and a chime if it is the first of the suit that must be `broken` (hearts or spades). */

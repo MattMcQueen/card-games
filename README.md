@@ -11,6 +11,7 @@ anyone. The sites are funded by a Ko-fi "Support me" button.
 | Hearts | [`apps/hearts`](apps/hearts) | https://hearts.matt-rarely-writes.co.uk |
 | Spades | [`apps/spades`](apps/spades) | https://spades.matt-rarely-writes.co.uk |
 | Bridge | [`apps/bridge`](apps/bridge) | https://bridge.matt-rarely-writes.co.uk |
+| Cribbage | [`apps/cribbage`](apps/cribbage) | not yet live (see its README) |
 
 Each game's README has its rules. This one is about how the games are put together.
 
@@ -26,6 +27,7 @@ apps/
   hearts/           the Hearts game, the same way
   spades/           the Spades game, the same way
   bridge/           rubber bridge, the same way
+  cribbage/         two-player cribbage, the same way, with its pegging board
 packages/
   cards-core/       plain TypeScript: Card, Rank and Suit, a deck or shoe, a fair shuffle, secure and seeded random numbers,
                     cards from text ("QS 10H") and in words, and the rules every trick-taking game shares (tricks.ts:
@@ -40,7 +42,10 @@ packages/
 - the card artwork (`src/cards`), sounds (`src/sounds`) and fonts (`src/fonts`);
 - `PlayingCard.svelte` (with the flip that works in Safari, see below, or flying in already face up), `CardBack`,
   `CardPile` (a deck or shoe), `Chip`, `ChipStack` and `chips.ts`;
-- `ResultBanner.svelte` (and its `Banner` type, `banner.ts`), the result of a hand on the table, and
+- `ResultBanner.svelte` (and its `Banner` type, `banner.ts`), the result of a hand on the table; `TableInfo.svelte`,
+  the hand and dealer in the top corner of a table and the game's own corner opposite; `YourSeat.svelte`, your name
+  plate and cards along the bottom of a table; `choice.svelte.ts`, cards chosen from your hand (to pass in Hearts,
+  for the crib in Cribbage); and
   `AboutPage.svelte` and `HowToPlayPage.svelte`, the frames of the About and How to play pages, into which a game
   passes its own details;
 - `motion.ts`: a card flying in and turning over, and the visitor's reduced-motion setting;
@@ -49,12 +54,14 @@ packages/
   `YourHand.svelte`, `TableControls.svelte` (the line and buttons under the table), `turns.svelte.ts` (the computer
   players' turns and the taking of each trick, a moment apart), `trickMotion.ts` (their timing) and `trickSounds.ts`
   (a card played, a trick gathered, the deal, the end of a hand); and for the two partnership games (Spades, Bridge),
-  `SeatPlate.svelte` (a player's name plate) and `CornerScores.svelte` (both sides' scores in the corner);
+  `SeatPlate.svelte` (a player's name plate, which Cribbage uses too) and `CornerScores.svelte` (both sides' scores
+  in the corner). The deal's timing, your hand and the computer players' fans take the number of `seats` at a table,
+  four unless a game says otherwise (Cribbage has two), and Cribbage uses `TurnTaker` for Ruth's turns too;
 - `synth.ts` and `sound.svelte.ts`: the sound engine, the sounds every game has, and mute;
 - `Site.svelte`: the page every game sits in (header, How to play and About pages, Support me button), with the
   small router that keeps the game running while you read the rules;
 - `app.css`: the colours, fonts and shared styles (the felt, players' name plates, buttons, cards that are buttons,
-  the pages), matching
+  score sheets, the pages), matching
   Brand New (https://brand-new.matt-rarely-writes.co.uk);
 - `public/`: what every site serves as it is: `staticwebapp.config.json` (the Azure security headers, routes and
   caching), the favicon, `robots.txt` and the 404 page's styles;
@@ -108,7 +115,8 @@ guard it.
 
 Each game is its own Azure Static Web App. GitHub Actions builds it (Azure's own build does not understand npm
 workspaces) and uploads `apps/<game>/dist`: see `.github/workflows/`. A game is tested and redeployed only when it or
-a shared package changes. The apps are `swa-blackjack`, `swa-poker`, `swa-hearts`, `swa-spades` and `swa-bridge` (Free plan)
+a shared package changes. The apps are `swa-blackjack`, `swa-poker`, `swa-hearts`, `swa-spades` and `swa-bridge` (Free plan; Cribbage has
+none yet)
 in the `rg-matt-rarely-writes` resource group, with their addresses as CNAME records at Porkbun. Deploying uses
 each app's deploy token, kept as the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN_<GAME>`; without it the
 deploy step only says so.

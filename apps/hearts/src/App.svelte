@@ -2,11 +2,11 @@
   import { preloadCards } from '@card-games/card-kit/cardImages';
   import Site from '@card-games/card-kit/Site.svelte';
   import { animationTime, fromRect } from '@card-games/card-kit/trickMotion';
+  import { CardChoice } from '@card-games/card-kit/choice.svelte';
   import { TurnTaker } from '@card-games/card-kit/turns.svelte';
   import {
     HUMAN_SEAT,
     PASS_SIZE,
-    cardKey,
     choosePass,
     collect,
     decide,
@@ -37,18 +37,14 @@
   const game = $derived(table.game);
   const update = (next: GameState) => table.update(next);
 
-  /** The cards chosen to pass, as "QS". */
-  let selected = $state.raw<ReadonlySet<string>>(new Set());
+  /** The cards chosen to pass. */
+  const chosen = new CardChoice(PASS_SIZE);
   /** Where the card you last played was, so it flies to the trick from there. */
   let yourCardFrom = $state.raw(fromRect(null));
 
   function pick(card: Card, from: HTMLElement) {
-    const key = cardKey(card);
     if (game.phase === 'passing') {
-      const next = new Set(selected);
-      if (next.has(key)) next.delete(key);
-      else if (next.size < PASS_SIZE) next.add(key);
-      selected = next;
+      chosen.toggle(card);
       return;
     }
     yourCardFrom = fromRect(from.getBoundingClientRect());
@@ -56,14 +52,13 @@
   }
 
   function pass() {
-    const mine = game.players[HUMAN_SEAT]!.hand.filter((c) => selected.has(cardKey(c)));
+    const mine = chosen.take(game.players[HUMAN_SEAT]!.hand);
     const picks = game.players.map((p) => (p.human ? mine : choosePass(game, p.id)));
-    selected = new Set();
     update(passCards(game, picks));
   }
 
   function restart() {
-    selected = new Set();
+    chosen.clear();
     update(newGame());
   }
 
@@ -75,6 +70,6 @@
 <Site name="Hearts" {HowToPlay} {About}>
   <div class="sr-only" role="status" aria-live="polite">{announcement}</div>
 
-  <Table {game} {selected} {yourCardFrom} onpick={pick} />
-  <Controls {game} chosen={selected.size} onpass={pass} onnext={() => update(nextHand(game))} onrestart={restart} />
+  <Table {game} selected={chosen.keys} {yourCardFrom} onpick={pick} />
+  <Controls {game} chosen={chosen.keys.size} onpass={pass} onnext={() => update(nextHand(game))} onrestart={restart} />
 </Site>

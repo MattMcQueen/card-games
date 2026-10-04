@@ -227,6 +227,42 @@ button {
   height: 46px;
 }
 
+/* A score sheet under the table: each hand's scores, a heading over each player's or side's columns (with a row of
+   `.sub` headings under it), and the totals at the foot, the leader's `.best`. */
+.score-sheet {
+  width: 100%;
+  max-width: 30rem;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+.score-sheet th,
+.score-sheet td {
+  padding: 0.25rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.score-sheet thead th {
+  color: var(--muted);
+  font-weight: 700;
+}
+.score-sheet .sub th {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.score-sheet tbody th {
+  color: var(--muted);
+  font-weight: 600;
+}
+.score-sheet tfoot th,
+.score-sheet tfoot td {
+  border-bottom: 0;
+  font-weight: 800;
+}
+.score-sheet .best {
+  color: var(--accent);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

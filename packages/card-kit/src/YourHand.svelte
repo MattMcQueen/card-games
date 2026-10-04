@@ -16,6 +16,7 @@
     selected = none,
     received = none,
     receivedFrom = -1,
+    seats,
     onpick,
   }: {
     cards: readonly Card[];
@@ -33,11 +34,13 @@
     received?: ReadonlySet<string>;
     /** The seat they came from: they fly in from there. */
     receivedFrom?: number;
+    /** Players round the table, if not four: the deal goes round them. */
+    seats?: number;
     /** A card was chosen; `from` is the card on the screen. */
     onpick: (card: Card, from: HTMLElement) => void;
   } = $props();
 
-  const order = $derived(dealOrder(YOUR_SEAT, dealer));
+  const order = $derived(dealOrder(YOUR_SEAT, dealer, seats));
 </script>
 
 <!-- Your cards, fanned along the bottom of the table. They are buttons when you can pick one. -->
@@ -61,7 +64,7 @@
       >
         <PlayingCard
           {card}
-          delay={received.has(key) ? 0 : dealDelay(order, i)}
+          delay={received.has(key) ? 0 : dealDelay(order, i, seats)}
           from={received.has(key) ? fromElement(`fan-${receivedFrom}`) : undefined}
           dim={mode === 'play' && !usable}
         />

@@ -3,16 +3,16 @@
   import { dealt } from './motion';
   import { dealDelay, dealOrder } from './trickMotion';
 
-  /** `count` face-down cards held by `seat`, dealt afresh for each `hand` by `dealer`. */
-  let { seat, count, hand, dealer }: { seat: number; count: number; hand: number; dealer: number } = $props();
+  /** `count` face-down cards held by `seat`, dealt afresh for each `hand` by `dealer` round a table of `seats`. */
+  let { seat, count, hand, dealer, seats }: { seat: number; count: number; hand: number; dealer: number; seats?: number } = $props();
 
-  const order = $derived(dealOrder(seat, dealer));
+  const order = $derived(dealOrder(seat, dealer, seats));
 </script>
 
 <!-- A computer player's hand: its cards face down in a tight fan. Cards it plays fly out from here. -->
 <div class="fan" id="fan-{seat}" style:--n={count} aria-label="{count} cards" role="img">
   {#each { length: count } as _, i (`${hand}-${i}`)}
-    <div class="back" use:dealt={{ delay: dealDelay(order, i) }}><CardBack /></div>
+    <div class="back" use:dealt={{ delay: dealDelay(order, i, seats) }}><CardBack /></div>
   {/each}
 </div>
 

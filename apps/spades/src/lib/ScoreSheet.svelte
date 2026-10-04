@@ -10,7 +10,7 @@
 </script>
 
 <!-- The score sheet: each partnership's bid, tricks and points in every hand, and the totals. -->
-<table class="sheet">
+<table class="score-sheet">
   <caption class="sr-only">Scores</caption>
   <thead>
     <tr>
@@ -52,31 +52,6 @@
 </table>
 
 <style>
-  .sheet {
-    width: 100%;
-    max-width: 30rem;
-    border-collapse: collapse;
-    font-variant-numeric: tabular-nums;
-    font-size: 0.9rem;
-  }
-  th,
-  td {
-    padding: 0.25rem 0.4rem;
-    border-bottom: 1px solid var(--line);
-    text-align: center;
-  }
-  thead th {
-    color: var(--muted);
-    font-weight: 700;
-  }
-  .sub th {
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  tbody th {
-    color: var(--muted);
-    font-weight: 600;
-  }
   .points {
     font-weight: 700;
   }
@@ -87,13 +62,5 @@
     color: var(--muted);
     font-size: 0.8rem;
     font-weight: 600;
-  }
-  tfoot th,
-  tfoot td {
-    border-bottom: 0;
-    font-weight: 800;
-  }
-  .best {
-    color: var(--accent);
   }
 </style>

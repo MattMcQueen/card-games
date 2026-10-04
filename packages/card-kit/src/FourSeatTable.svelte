@@ -3,6 +3,8 @@
   import type { Snippet } from 'svelte';
   import type { Banner } from './banner';
   import Fan from './Fan.svelte';
+  import TableInfo from './TableInfo.svelte';
+  import YourSeat from './YourSeat.svelte';
   import type { Origin } from './motion';
   import ResultBanner from './ResultBanner.svelte';
   import Trick from './Trick.svelte';
@@ -50,12 +52,11 @@
   } = $props();
 </script>
 
+{#snippet yourPlate()}{@render plate(0)}{/snippet}
+
 <div class="rail">
   <div class="felt">
-    <p class="info">
-      {#each info as part, i (i)}{#if i > 0}<span class="dot">{' · '}</span>{/if}<span>{part}</span>{/each}
-    </p>
-    {#if corner}<div class="corner">{@render corner()}</div>{/if}
+    <TableInfo {info} {corner} />
     <!-- Where the deal flies out from: the middle of the table. -->
     <div id="deck" class="deck-spot" aria-hidden="true"></div>
 
@@ -77,10 +78,9 @@
       </div>
     </div>
 
-    <div class="bottom">
-      <div class="slot s0">{@render plate(0)}</div>
+    <YourSeat plate={yourPlate}>
       {@render yourHand()}
-    </div>
+    </YourSeat>
   </div>
 </div>
 
@@ -100,24 +100,6 @@
     --cw: clamp(2.6rem, 7cqw, 4.6rem);
     --ch: calc(var(--cw) * 1.455);
     --plate-w: 6.8rem;
-  }
-  .info,
-  .corner {
-    position: absolute;
-    top: 0.8rem;
-    margin: 0;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--gold) 55%, transparent);
-  }
-  .info {
-    left: 1rem;
-  }
-  .corner {
-    right: 1rem;
-    text-align: right;
   }
   .deck-spot {
     position: absolute;
@@ -171,23 +153,6 @@
     pointer-events: none;
   }
 
-  /* You: your name plate to the left of your cards, which take the width between it and its twin space on the right. */
-  .bottom {
-    position: absolute;
-    left: 1rem;
-    right: 1rem;
-    bottom: 0.9rem;
-    display: grid;
-    grid-template-columns: var(--plate-w) minmax(0, 1fr) var(--plate-w);
-    align-items: end;
-    gap: 1rem;
-  }
-  .s0 {
-    --plate-w: 7.5rem;
-    --plate-name: 0.95rem;
-    --plate-stack: 1.15rem;
-  }
-
   /* Narrow tables (phones): taller, with the players pulled in and everything smaller. */
   @container (max-width: 600px) {
     .felt {
@@ -226,36 +191,6 @@
     .middle,
     .deck-spot {
       top: 46%;
-    }
-    .bottom {
-      left: 0.5rem;
-      right: 0.5rem;
-      bottom: 0.6rem;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0.2rem;
-    }
-    .s0 {
-      justify-self: start;
-      --plate-w: 6rem;
-      --plate-name: 0.8rem;
-      --plate-stack: 0.95rem;
-    }
-    /* In the top corners on two short lines, clear of the player at the top. */
-    .info,
-    .corner {
-      top: 0.6rem;
-      font-size: 0.62rem;
-      line-height: 1.35;
-    }
-    .info {
-      left: 0.75rem;
-      display: grid;
-    }
-    .corner {
-      right: 0.75rem;
-    }
-    .info .dot {
-      display: none;
     }
   }
 </style>
