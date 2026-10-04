@@ -11,7 +11,7 @@ anyone. The sites are funded by a Ko-fi "Support me" button.
 | Hearts | [`apps/hearts`](apps/hearts) | https://hearts.matt-rarely-writes.co.uk |
 | Spades | [`apps/spades`](apps/spades) | https://spades.matt-rarely-writes.co.uk |
 | Bridge | [`apps/bridge`](apps/bridge) | https://bridge.matt-rarely-writes.co.uk |
-| Cribbage | [`apps/cribbage`](apps/cribbage) | not yet live (see its README) |
+| Cribbage | [`apps/cribbage`](apps/cribbage) | https://cribbage.matt-rarely-writes.co.uk |
 
 Each game's README has its rules. This one is about how the games are put together.
 
@@ -115,8 +115,7 @@ guard it.
 
 Each game is its own Azure Static Web App. GitHub Actions builds it (Azure's own build does not understand npm
 workspaces) and uploads `apps/<game>/dist`: see `.github/workflows/`. A game is tested and redeployed only when it or
-a shared package changes. The apps are `swa-blackjack`, `swa-poker`, `swa-hearts`, `swa-spades` and `swa-bridge` (Free plan; Cribbage has
-none yet)
+a shared package changes. The apps are `swa-blackjack`, `swa-poker`, `swa-hearts`, `swa-spades`, `swa-bridge` and `swa-cribbage` (Free plan)
 in the `rg-matt-rarely-writes` resource group, with their addresses as CNAME records at Porkbun. Deploying uses
 each app's deploy token, kept as the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN_<GAME>`; without it the
 deploy step only says so.

@@ -3,9 +3,10 @@
 A free game of two-player Cribbage against a computer opponent, to 121 on a pegging board, played entirely in the
 browser.
 
-No money is involved. There are no cookies, no login and no advertising. The site is funded by a Ko-fi "Support me"
-button. (Visits will be counted with Cloudflare Web Analytics, as on the other games, once the site is live and has
-its own analytics site: see "Hosting" below.)
+It is at https://cribbage.matt-rarely-writes.co.uk.
+
+No money is involved. There are no cookies, no login and no advertising; visits are counted with Cloudflare Web
+Analytics, which does not identify anyone. The site is funded by a Ko-fi "Support me" button.
 
 Built from the same pieces as the other games (Svelte 5, Vite, TypeScript, a pure and well-tested rules engine, no
 backend), in the card-games repository: see the README at the root for how the games are put together.
@@ -86,10 +87,9 @@ or is cut off at six screen sizes at every step of the play and the show. To set
 
 ## Hosting
 
-Not yet live. To publish it as the other games are: create the Azure Static Web App `swa-cribbage`, add its deploy
-token as the repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN_CRIBBAGE` (until then `.github/workflows/cribbage.yml`
-only tests it), add the CNAME `cribbage.matt-rarely-writes.co.uk` at Porkbun, and create its Cloudflare Web Analytics
-site, putting the token in `src/main.ts` with `countVisits`, as the other games do.
+The Azure Static Web App `swa-cribbage` (Free plan), deployed by `.github/workflows/cribbage.yml` with the repository
+secret `AZURE_STATIC_WEB_APPS_API_TOKEN_CRIBBAGE`, at the CNAME `cribbage.matt-rarely-writes.co.uk` at Porkbun. Its
+Cloudflare Web Analytics token is in `src/main.ts`.
 
 ## Credits, look and feel
 
