@@ -1,4 +1,4 @@
-import { cardsLanded, collectErrors, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
+import { cardsLanded, collectErrors, hurry, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 const yourCards = (page: Page) => page.locator('.hand .slot');
@@ -43,7 +43,7 @@ async function playToTheEnd(page: Page) {
       if (await done.isVisible()) return;
       await yourMove(page);
       expect(await done.isVisible()).toBe(true);
-    }).toPass({ timeout: 120_000, intervals: [250] });
+    }).toPass({ timeout: 120_000, intervals: [50] });
   } catch (error) {
     throw new Error(`The hand did not finish. The controls said: ${await page.locator('.controls').innerText()}
 ${error}`);
@@ -95,6 +95,7 @@ test.describe('with motion', () => {
 
   test('plays a whole hand, counts the show and fills in the score sheet', async ({ page }) => {
     const errors = collectErrors(page);
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     const dealer = (await page.locator('#seat-0').innerText()).includes('Dealer') ? 0 : 1;

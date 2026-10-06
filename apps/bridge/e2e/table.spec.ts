@@ -1,4 +1,4 @@
-import { cardsLanded, collectErrors, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
+import { cardsLanded, collectErrors, hurry, isFaceUp, mute, pace, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 const yourCards = (page: Page) => page.locator('.hand .slot');
@@ -36,7 +36,7 @@ async function playToTheEnd(page: Page) {
       if (await endOfHand(page).isVisible()) return;
       await playOne(page);
       expect(await endOfHand(page).isVisible()).toBe(true);
-    }).toPass({ timeout: 360_000, intervals: [250] });
+    }).toPass({ timeout: 360_000, intervals: [50] });
   } catch (error) {
     throw new Error(`The hand did not finish. The controls said: ${await page.locator('.controls').innerText()}
 ${error}`);
@@ -69,6 +69,7 @@ test.describe('with motion', () => {
 
   test('a call shows on your plate and in the auction', async ({ page }) => {
     const errors = collectErrors(page);
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     await page.getByRole('button', { name: '7', exact: true }).click();
@@ -88,6 +89,7 @@ test.describe('with motion', () => {
     // A bridge hand is long, and headless WebKit on Windows draws the pulsing name plate at a few frames a second.
     test.setTimeout(420_000);
     const errors = collectErrors(page);
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     await playToTheEnd(page);
@@ -153,12 +155,15 @@ test.describe('layout', () => {
     test(`nothing overlaps on a ${name} (${width} x ${height}), with the dummy and a full trick, and at the result`, async ({ page }, testInfo) => {
       test.skip(testInfo.project.name !== 'webkit', 'the sizes are set here, so one browser project is enough');
       await page.setViewportSize({ width, height });
+      await hurry(page);
       await page.goto('/');
       await mute(page);
       await expect(yourCards(page)).toHaveCount(13);
       expect(await problems(page)).toEqual([]);
 
       await callThrough(page);
+      // A full trick on the table, at the usual pace so it is seen before it is taken.
+      await pace(page, 1);
       const four = page.locator('.trick .spot');
       await expect(async () => {
         await playOne(page);
@@ -166,10 +171,11 @@ test.describe('layout', () => {
       }).toPass({ timeout: 60_000, intervals: [100] });
       expect(await problems(page)).toEqual([]);
 
+      await pace(page);
       await expect(async () => {
         await playOne(page);
         expect(await endOfHand(page).isVisible()).toBe(true);
-      }).toPass({ timeout: 180_000, intervals: [250] });
+      }).toPass({ timeout: 180_000, intervals: [50] });
       await expect(page.locator('.verdict')).toBeVisible();
       expect(await problems(page)).toEqual([]);
     });

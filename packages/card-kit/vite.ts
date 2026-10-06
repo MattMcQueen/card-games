@@ -65,6 +65,8 @@ export function gameConfig() {
     preview: { headers: previewHeaders() },
     test: {
       include: ['src/**/*.test.ts'],
+      // Keep the transformed modules between runs, so only what changed is transformed again.
+      fsModuleCache: true,
     },
   });
 }

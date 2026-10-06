@@ -5,6 +5,30 @@ export async function mute(page: Page) {
   await page.getByRole('button', { name: 'Mute sound' }).click();
 }
 
+/** How many times sooner the timers go off in a hurried test. */
+const HURRIED = 20;
+
+/**
+ * Makes the page's timers (`setTimeout`) go off `times` sooner, so a test does not sit through the computer
+ * players' pauses. Called before the page loads; `pace` changes it later. The cards' flight is plain CSS,
+ * which keeps to the real clock. (Playwright's own clock was tried: it also holds back animation frames,
+ * which Playwright waits on before each click, so a click took seconds.)
+ */
+export async function hurry(page: Page, times = HURRIED) {
+  await page.addInitScript((times) => {
+    const page = window as Window & { pace?: number };
+    page.pace = times;
+    const setTimeout = window.setTimeout;
+    window.setTimeout = ((handler: TimerHandler, timeout = 0, ...args: unknown[]) =>
+      setTimeout(handler, timeout / (page.pace ?? 1), ...args)) as typeof window.setTimeout;
+  }, times);
+}
+
+/** Sets how many times sooner the page's timers go off (see `hurry`): 1 is as normal. */
+export async function pace(page: Page, times = HURRIED) {
+  await page.evaluate((times) => ((window as Window & { pace?: number }).pace = times), times);
+}
+
 /** Errors the page reports: exceptions, console errors, and anything the security headers block. */
 export function collectErrors(page: Page): string[] {
   const errors: string[] = [];

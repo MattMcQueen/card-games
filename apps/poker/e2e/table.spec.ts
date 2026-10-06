@@ -1,4 +1,4 @@
-import { collectErrors, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
+import { cardsLanded, collectErrors, hurry, isFaceUp, mute, problemsIn, sizes, type Box, type Measurements } from '@card-games/e2e/helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /** The button that ends a hand: "Next hand", or "Play again" if the hand cost you your last chips. */
@@ -13,7 +13,7 @@ async function playToTheEnd(page: Page) {
       if (await done.isVisible()) return;
       if (await move.isVisible()) await move.click();
       expect(await done.isVisible()).toBe(true);
-    }).toPass({ timeout: 150_000, intervals: [200] });
+    }).toPass({ timeout: 150_000, intervals: [50] });
   } catch (error) {
     throw new Error(`The hand did not finish. The controls said: ${await page.locator('.controls').innerText()}
 ${error}`);
@@ -23,6 +23,7 @@ ${error}`);
 test.describe('with motion', () => {
   test('deals a hand with no errors, and the deck is in the corner', async ({ page }) => {
     const errors = collectErrors(page);
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     await expect(page).toHaveTitle("Texas Hold'em");
@@ -44,11 +45,8 @@ test.describe('with motion', () => {
     const cards = page.locator('.s0 .hole > .card');
     await expect(cards).toHaveCount(2, { timeout: 30_000 });
     // Once the deal has finished the cards are in place and solid.
-    await page.waitForTimeout(3500);
-    for (const card of await cards.all()) {
-      expect(await card.locator('[role="img"]').evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
-      expect(await isFaceUp(page, card)).toBe(true);
-    }
+    await cardsLanded(page, cards.locator('[role="img"]'));
+    for (const card of await cards.all()) expect(await isFaceUp(page, card)).toBe(true);
     // The deck and the cards of an opponent who has not folded (folded cards are darkened) show their backs.
     expect(await isFaceUp(page, page.locator('#deck .layer').first())).toBe(false);
     const inHand = page.locator('.felt > .slot:not(.s0)').filter({ hasNot: page.getByText('Fold', { exact: true }) });
@@ -56,6 +54,7 @@ test.describe('with motion', () => {
   });
 
   test('the flop is dealt face up', async ({ page }) => {
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     const next = endOfHand(page);
@@ -67,12 +66,13 @@ test.describe('with motion', () => {
       if (await next.isVisible()) await next.click();
       else if (await move.isVisible()) await move.click();
       expect((await board.count()) >= 3 && (await move.isVisible())).toBe(true);
-    }).toPass({ timeout: 150_000, intervals: [250] });
-    await page.waitForTimeout(3000);
+    }).toPass({ timeout: 150_000, intervals: [50] });
+    await cardsLanded(page, board);
     for (const card of await board.all()) expect(await isFaceUp(page, card)).toBe(true);
   });
 
   test('opponents still in the hand turn their cards over at a showdown', async ({ page }) => {
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     const next = endOfHand(page);
@@ -85,16 +85,16 @@ test.describe('with motion', () => {
       if (!(await verdict.textContent())?.includes('Everyone else folded')) break;
       await next.click();
     }
-    await page.waitForTimeout(1500);
     const stillIn = page.locator('.felt > .slot:not(.s0)').filter({ hasNot: page.getByText('Fold', { exact: true }) });
     expect(await stillIn.count()).toBeGreaterThan(0);
     for (const slot of await stillIn.all()) {
-      expect(await slot.locator('.hole [role="img"]').count()).toBe(2); // their two cards are showing
+      await expect(slot.locator('.hole [role="img"]')).toHaveCount(2); // their two cards are showing
     }
   });
 
   test('plays a whole hand and shows who won', async ({ page }) => {
     const errors = collectErrors(page);
+    await hurry(page);
     await page.goto('/');
     await mute(page);
     await playToTheEnd(page);
@@ -184,6 +184,7 @@ test.describe('layout', () => {
     test(`nothing overlaps on a ${name} (${width} x ${height}), during a hand and at the result`, async ({ page }, testInfo) => {
       test.skip(testInfo.project.name !== 'webkit', 'the sizes are set here, so one browser project is enough');
       await page.setViewportSize({ width, height });
+      await hurry(page);
       await page.goto('/');
       await mute(page);
       // Your turn, or (if the others all fold to you) the end of the hand.

@@ -10,12 +10,15 @@ export function e2eConfig(port: number) {
   return defineConfig({
     testDir: 'e2e',
     fullyParallel: true,
+    // The tests mostly wait on the page, so CI's runner can take one per core rather than Playwright's half.
+    workers: process.env.CI ? '100%' : undefined,
     // A whole hand against the computer takes a while, even with the animations off.
     timeout: 200_000,
     reporter: 'list',
     use: { baseURL: `http://localhost:${port}` },
     webServer: {
-      command: `npm run build && npm run preview -- --port ${port} --strictPort`,
+      // CI has just built the game (see .github/workflows/game.yml), so it only needs serving.
+      command: `${process.env.CI ? '' : 'npm run build && '}npm run preview -- --port ${port} --strictPort`,
       url: `http://localhost:${port}`,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
